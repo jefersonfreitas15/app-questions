@@ -1,207 +1,219 @@
-import { FiltersSidebar } from "@/components/simulado/filters-sidebar";
-import {
-  CadernoQuestoes,
-  PainelDesempenho,
-  BotaoNovaQuestao,
-  SeletorTema,
-} from "@/components/simulado/question-card";
-import { supabase } from "@/lib/supabase";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { ArrowRight, BrainCircuit, Target, BarChart3, MoonStar, CheckCircle2, XCircle } from "lucide-react";
+import Link from "next/link";
 
-export default async function Page({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | undefined }>;
-}) {
-  const filtrosAtivos = await searchParams;
-
-  const banca = filtrosAtivos.banca || "";
-  const orgao = filtrosAtivos.orgao || "";
-  const ano = filtrosAtivos.ano || "";
-  const disciplina = filtrosAtivos.disciplina || "";
-  const assunto = filtrosAtivos.assunto || "";
-
-  const temFiltroAtivo = Boolean(banca || orgao || ano || disciplina || assunto);
-
-  // 1. Busca das questões filtradas com contagem exata no banco
-  let query = supabase
-    .from("questoes")
-    .select("*, alternativas(*)", { count: "exact" })
-    .order("id", { ascending: false })
-    .limit(100);
-
-  if (banca) query = query.eq("banca", banca);
-  if (orgao) query = query.eq("orgao", orgao);
-  if (ano) query = query.eq("ano", Number(ano));
-  if (disciplina) query = query.eq("disciplina", disciplina);
-  if (assunto) query = query.eq("assunto", assunto);
-
-  // 2. Cruzamento dinâmico dos filtros em cascata (sem depender de alteração no SQL)
-  const buscarMetadadosCascata = async () => {
-    const criarQueryMeta = (ignorarCampo: string) => {
-      let q = supabase
-        .from("questoes")
-        .select("banca, orgao, ano, disciplina, assunto")
-        .limit(5000);
-
-      if (banca && ignorarCampo !== "banca") q = q.eq("banca", banca);
-      if (orgao && ignorarCampo !== "orgao") q = q.eq("orgao", orgao);
-      if (ano && ignorarCampo !== "ano") q = q.eq("ano", Number(ano));
-      if (disciplina && ignorarCampo !== "disciplina") q = q.eq("disciplina", disciplina);
-      if (assunto && ignorarCampo !== "assunto") q = q.eq("assunto", assunto);
-
-      return q;
-    };
-
-    const [resBanca, resOrgao, resAno, resDisc, resAssunto] = await Promise.all([
-      criarQueryMeta("banca"),
-      criarQueryMeta("orgao"),
-      criarQueryMeta("ano"),
-      criarQueryMeta("disciplina"),
-      criarQueryMeta("assunto"),
-    ]);
-
-    const extrairUnicos = (dados: any[] | null, chave: string, decrescente = false) => {
-      if (!dados) return [];
-      const valores = Array.from(
-        new Set(
-          dados
-            .map((item) => (item[chave] != null ? String(item[chave]).trim() : ""))
-            .filter(Boolean)
-        )
-      );
-      return decrescente
-        ? valores.sort((a, b) => b.localeCompare(a, "pt-BR", { numeric: true }))
-        : valores.sort((a, b) => a.localeCompare(b, "pt-BR"));
-    };
-
-    return {
-      banca: extrairUnicos(resBanca.data, "banca"),
-      orgao: extrairUnicos(resOrgao.data, "orgao"),
-      ano: extrairUnicos(resAno.data, "ano", true),
-      disciplina: extrairUnicos(resDisc.data, "disciplina"),
-      assunto: extrairUnicos(resAssunto.data, "assunto"),
-    };
-  };
-
-  const [questoesRes, opcoesBaseRes, opcoesCascata, respostasRes] = await Promise.all([
-    query,
-    !temFiltroAtivo ? supabase.rpc("obter_opcoes_filtros") : Promise.resolve({ data: null }),
-    temFiltroAtivo ? buscarMetadadosCascata() : Promise.resolve(null),
-    supabase.from("respostas_usuarios").select("*"),
-  ]);
-
-  const questoesFiltradas = questoesRes.data || [];
-  const totalExibido = questoesRes.count ?? questoesFiltradas.length;
-
-  const opcoesData = temFiltroAtivo ? opcoesCascata : opcoesBaseRes.data;
-
-  const opcoesDoBanco = {
-    banca: opcoesData?.banca || [],
-    orgao: opcoesData?.orgao || [],
-    ano: (opcoesData?.ano || []).map(String),
-    disciplina: opcoesData?.disciplina || [],
-    assunto: opcoesData?.assunto || [],
-  };
-
-  const initialRespostas = respostasRes.data || [];
+export default function LandingPage() {
+  // Cole seu link da Kiwify aqui também para quem quiser comprar direto sem testar
+  const LINK_CHECKOUT = "https://pay.kiwify.com.br/SEU-LINK-AQUI";
 
   return (
-    <div
-      id="simulado-root"
-      className="min-h-svh bg-[#F8FAFC] text-slate-900 transition-colors duration-200"
-    >
-      {/* Cabeçalho com a Identidade Visual Qpro Concursos */}
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-3.5">
-          {/* Logo e Título */}
-          <div className="flex items-center justify-between sm:justify-start gap-3.5">
-            <div className="flex items-center gap-3.5">
-              <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-200/80">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="h-6 w-6 text-white"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M8 2v3" />
-                  <path d="M12 2v3" />
-                  <path d="M16 2v3" />
-                  <rect
-                    x="4"
-                    y="4"
-                    width="16"
-                    height="18"
-                    rx="3"
-                    className="fill-white/10"
-                  />
-                  <path d="M8 10h8" />
-                  <path d="M8 14h5" />
-                  <path d="M8 18h3" />
-                </svg>
-                <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-extrabold text-white ring-2 ring-white shadow-xs">
-                  ✓
-                </span>
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
-                    <span className="text-indigo-600">Q</span>pro
-                  </h1>
-                  <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-indigo-700 border border-indigo-200/60">
-                    Concursos
-                  </span>
-                </div>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">
-                  Plataforma Inteligente de Questões
-                </p>
-              </div>
-            </div>
-
-            {/* Ações visíveis apenas em mobile ao lado do logo se houver espaço, ou integradas */}
-            <div className="flex sm:hidden items-center gap-1.5">
-              <SeletorTema />
-            </div>
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+      
+      {/* HEADER SIMPLES */}
+      <header className="absolute top-0 w-full p-6 flex justify-between items-center z-10 max-w-6xl mx-auto left-0 right-0">
+        <div className="flex items-center gap-2 font-black text-xl tracking-tight text-slate-800">
+          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+            Q
           </div>
-
-          {/* Botões de Ação (Responsivos: linha em telas médias/grandes, ajustados em telemóvel) */}
-          <div className="flex items-center justify-between sm:justify-end gap-2 pt-1 sm:pt-0 border-t border-slate-100 sm:border-0">
-            <div className="hidden sm:flex items-center gap-2">
-              <SeletorTema />
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
-              <BotaoNovaQuestao />
-            </div>
-          </div>
+          Qpro Concursos
         </div>
+        <Link 
+          href="/app" 
+          className="text-sm font-bold text-slate-600 hover:text-indigo-600 transition-colors"
+        >
+          Já sou aluno
+        </Link>
       </header>
 
-      {/* Conteúdo Principal */}
-      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-        <PainelDesempenho
-          initialRespostas={initialRespostas}
-          questions={questoesFiltradas}
-        />
-        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-          <FiltersSidebar dbOptions={opcoesDoBanco} />
-          <CadernoQuestoes
-            questions={questoesFiltradas}
-            totalCount={totalExibido}
-            filtros={{
-              banca,
-              orgao,
-              ano,
-              disciplina,
-              assunto,
-            }}
-          />
+      {/* HERO SECTION (A Promessa Principal) */}
+      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-4 overflow-hidden">
+        {/* Efeitos de fundo */}
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-emerald-400/20 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wider mb-6">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+            </span>
+            A primeira plataforma com IA
+          </div>
+          
+          <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight mb-6">
+            Chega de pagar <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-500">mensalidades caras</span> para resolver questões.
+          </h1>
+          
+          <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
+            Estude de forma inteligente com a primeira plataforma que gera questões inéditas por Inteligência Artificial. <strong>Pague uma única vez. Acesse para sempre.</strong>
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link 
+              href="/app" 
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-base shadow-lg shadow-indigo-200 transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              Testar o Aplicativo Grátis <ArrowRight className="w-5 h-5" />
+            </Link>
+            <a 
+              href={LINK_CHECKOUT}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white border-2 border-slate-200 hover:border-indigo-600 text-slate-700 font-extrabold text-base transition-all active:scale-95 flex items-center justify-center"
+            >
+              Comprar Acesso Vitalício
+            </a>
+          </div>
+          <p className="text-xs font-medium text-slate-400 mt-4">
+            Não pedimos cartão de crédito para testar.
+          </p>
         </div>
-      </main>
+      </section>
+
+      {/* COMPARATIVO (A Dor vs A Solução) */}
+      <section className="py-20 bg-white px-4 border-y border-slate-100">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-extrabold text-slate-900 mb-4">
+              Por que rasgar dinheiro todo ano?
+            </h2>
+            <p className="text-slate-500">Veja a diferença entre os cursinhos tradicionais e o Qpro.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Card Concorrência */}
+            <div className="bg-rose-50/50 border border-rose-100 p-8 rounded-3xl">
+              <h3 className="text-lg font-bold text-rose-900 mb-6 flex items-center gap-2">
+                <XCircle className="w-6 h-6 text-rose-500" /> Plataformas Tradicionais
+              </h3>
+              <ul className="space-y-4">
+                {[
+                  "Mensalidades que somam R$ 200 a R$ 400 por ano",
+                  "Questões desatualizadas e repetidas",
+                  "Interface poluída cheia de propagandas",
+                  "Comentários dependem de outros alunos",
+                  "Se você parar de pagar, perde tudo"
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm font-medium text-slate-700">
+                    <span className="text-rose-500 font-bold mt-0.5">✕</span> {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Card Qpro */}
+            <div className="bg-indigo-600 p-8 rounded-3xl shadow-xl shadow-indigo-200 transform md:-translate-y-4 relative">
+              <div className="absolute top-0 right-6 transform -translate-y-1/2 bg-emerald-400 text-emerald-950 text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full">
+                Sua Melhor Escolha
+              </div>
+              <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                <CheckCircle2 className="w-6 h-6 text-emerald-400" /> Qpro Concursos
+              </h3>
+              <ul className="space-y-4">
+                {[
+                  "Acesso Vitalício por R$ 47 (Você paga SÓ UMA VEZ)",
+                  "Questões Inéditas geradas por IA na hora",
+                  "Modo Leitura / Noturno sem distrações",
+                  "Comentários baseados na jurisprudência atual",
+                  "Caderno de Erros Automático"
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-3 text-sm font-medium text-indigo-50">
+                    <span className="text-emerald-400 font-bold mt-0.5">✓</span> {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* RECURSOS (Benefícios) */}
+      <section className="py-20 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm hover:-translate-y-1 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
+                <BrainCircuit className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-extrabold text-slate-900 mb-2">Motor de IA</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Gere simulados inéditos sob demanda para testar seus conhecimentos em tópicos específicos.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm hover:-translate-y-1 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mb-4">
+                <Target className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-extrabold text-slate-900 mb-2">Caderno de Erros</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Errou? A questão vai direto para um caderno especial para você revisar até nunca mais errar.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm hover:-translate-y-1 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-extrabold text-slate-900 mb-2">Raio-X Detalhado</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Acompanhe seu aproveitamento com gráficos em tempo real e descubra seus pontos fortes e fracos.
+              </p>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm hover:-translate-y-1 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
+                <MoonStar className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-extrabold text-slate-900 mb-2">Conforto Visual</h3>
+              <p className="text-sm text-slate-500 leading-relaxed">
+                Estude por horas sem cansar a vista usando o Modo Papel (Kindle) ou o Modo Noturno.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <section className="py-20 px-4">
+        <div className="max-w-4xl mx-auto bg-slate-900 rounded-[2.5rem] p-8 md:p-16 text-center relative overflow-hidden">
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500 via-slate-900 to-slate-900" />
+          
+          <h2 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-6 relative z-10">
+            A aprovação não precisa custar uma assinatura mensal.
+          </h2>
+          <p className="text-slate-300 mb-10 max-w-xl mx-auto relative z-10">
+            Desbloqueie agora a plataforma completa de questões com Inteligência Artificial por um valor único que cabe no seu bolso.
+          </p>
+
+          <div className="flex flex-col sm:flex-row justify-center gap-4 relative z-10">
+            <Link 
+              href="/app" 
+              className="px-8 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-emerald-950 font-extrabold text-base transition-all active:scale-95 flex items-center justify-center"
+            >
+              Quero Testar Gratuitamente
+            </Link>
+            <a 
+              href={LINK_CHECKOUT}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-8 py-4 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-extrabold text-base transition-all active:scale-95 flex items-center justify-center"
+            >
+              Comprar por R$ 47
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER SIMPLES */}
+      <footer className="py-8 text-center text-slate-500 text-xs font-medium border-t border-slate-200">
+        <p>© {new Date().getFullYear()} Qpro Concursos. Todos os direitos reservados.</p>
+        <p className="mt-1 opacity-70">Acesso Vitalício sujeito aos Termos de Uso e Disponibilidade da Plataforma.</p>
+      </footer>
+
     </div>
   );
 }
