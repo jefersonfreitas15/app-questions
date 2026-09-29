@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function LandingPage() {
   // Cole seu link da Kiwify aqui também para quem quiser comprar direto sem testar
-  const LINK_CHECKOUT = "https://pay.kiwify.com.br/SEU-LINK-AQUI";
+  const LINK_CHECKOUT = "https://pay.kiwify.com.br/VE1GbyL";
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-indigo-100 selection:text-indigo-900">
