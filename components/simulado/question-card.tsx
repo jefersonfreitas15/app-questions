@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 // CONFIGURAÇÕES COMERCIAIS (VENDA & ATIVAÇÃO)
 // ==========================================
 // Cole aqui o seu link de checkout da Kiwify, Hotmart, Kirvano ou Mercado Pago:
-const LINK_CHECKOUT_PAGAMENTO = "https://pay.kiwify.com.br/SEU-LINK-AQUI";
+const LINK_CHECKOUT_PAGAMENTO = "https://pay.kiwify.com.br/VE1GbyL";
 
 // Limite de questões gratuitas para quem vem do anúncio testar o app:
 const LIMITE_QUESTOES_GRATIS = 5;
