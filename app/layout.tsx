@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   description:
     'Plataforma inteligente de questões comentadas para concursos públicos com filtros em cascata, caderno de erros, tesourinha e gerador de questões com IA.',
   applicationName: 'Qpro Concursos',
+  manifest: '/manifest.json', // <-- Adicione esta linha para registar o manifesto
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -31,8 +32,8 @@ export const metadata: Metadata = {
     locale: 'pt_BR',
   },
   icons: {
-    icon: '/icon.svg',
-    apple: '/icon.svg',
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
   },
 }
 
