@@ -67,7 +67,6 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
     assunto: dbOptions?.assunto || [],
   };
 
-  // Aceita string | null | undefined para evitar erro de tipagem no onValueChange
   const handleSelectChange = (key: FilterKey, val: string | null | undefined) => {
     const rawVal = val ?? "";
     const filterDef = filters.find((f) => f.key === key);
@@ -111,11 +110,11 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
   const hasActiveFilters = Object.values(selected).some(Boolean);
 
   return (
-    <aside className="rounded-xl border bg-card p-5 lg:sticky lg:top-6">
-      <div className="flex items-center justify-between pb-4">
+    <aside className="rounded-xl border border-slate-200 bg-white p-5 lg:sticky lg:top-6 shadow-sm">
+      <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold">Filtros</h2>
+          <SlidersHorizontal className="size-4 text-slate-500" />
+          <h2 className="text-sm font-bold text-slate-800">Filtros</h2>
           {isPending && (
             <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
           )}
@@ -124,7 +123,7 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
         <button
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="flex items-center gap-1 text-xs font-medium text-indigo-600 lg:hidden"
+          className="flex items-center gap-1 text-xs font-bold text-indigo-600 lg:hidden hover:text-indigo-800 transition-colors"
         >
           {mobileOpen ? (
             <>
@@ -147,7 +146,7 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
           const options = filterOptions[filter.key] || [];
           return (
             <div key={filter.key} className="flex flex-col gap-1.5">
-              <Label htmlFor={filter.key} className="text-xs text-muted-foreground">
+              <Label htmlFor={filter.key} className="text-xs font-semibold text-slate-600">
                 {filter.label}
               </Label>
               <Select
@@ -155,10 +154,10 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
                 value={selected[filter.key] || undefined}
                 onValueChange={(val) => handleSelectChange(filter.key, val ?? "")}
               >
-                <SelectTrigger id={filter.key} className="w-full">
+                <SelectTrigger id={filter.key} className="w-full bg-white border-slate-200 text-slate-700">
                   <SelectValue placeholder={filter.placeholder} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-slate-200 text-slate-700">
                   <SelectItem value={filter.placeholder}>
                     {filter.placeholder}
                   </SelectItem>
@@ -177,7 +176,7 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
           <Button
             variant="outline"
             onClick={handleClear}
-            className="mt-2 w-full gap-2 text-xs"
+            className="mt-2 w-full gap-2 text-xs font-semibold text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-rose-600"
           >
             <RotateCcw className="size-3.5" />
             Limpar Filtros
