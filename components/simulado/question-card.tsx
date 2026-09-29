@@ -1625,11 +1625,15 @@ export function BotaoNovaQuestao() {
   };
 
   const handleAbrirGeradorIA = () => {
-    if (!usuarioTemAcessoTotal() && obterTotalResolvidasLocal() >= LIMITE_QUESTOES_GRATIS) {
+    // Verifica APENAS se o usuário tem o Acesso Vitalício.
+    // Se não tiver, ignora o saldo gratuito e abre a tela de vendas NA HORA.
+    if (!usuarioTemAcessoTotal()) {
       setAbaVitalicio('oferta');
       setModalVitalicioAberto(true);
       return;
     }
+    
+    // Só abre o modal da IA se ele já for um usuário Vitalício
     setModalIaAberto(true);
   };
 
