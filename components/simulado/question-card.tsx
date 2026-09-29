@@ -2658,39 +2658,14 @@ export function PainelAdminExclusivo() {
 }
 
 // ==========================================
-// 6. PERSONALIZADOR DE CORES (FUNDO, CARTÕES E FONTE)
+// 6. PERSONALIZADOR DE CORES COM APLICAÇÃO IMEDIATA NO DOM
 // ==========================================
 const TEMAS_PRONTOS = [
-  {
-    nome: "Gelo Padrão",
-    fundo: "#F8FAFC",
-    cartao: "#FFFFFF",
-    fonte: "#1E293B",
-  },
-  {
-    nome: "Papel Creme (Kindle)",
-    fundo: "#F5F2EB",
-    cartao: "#FCFBF7",
-    fonte: "#2C2623",
-  },
-  {
-    nome: "Azul Porcelana",
-    fundo: "#EEF4F8",
-    cartao: "#FFFFFF",
-    fonte: "#1E3A5F",
-  },
-  {
-    nome: "Verde Suave",
-    fundo: "#EFF6F2",
-    cartao: "#FFFFFF",
-    fonte: "#1B3B2B",
-  },
-  {
-    nome: "Modo Noturno",
-    fundo: "#0F172A",
-    cartao: "#1E293B",
-    fonte: "#F1F5F9",
-  },
+  { nome: "Gelo Padrão", fundo: "#F8FAFC", cartao: "#FFFFFF", fonte: "#1E293B" },
+  { nome: "Papel Creme (Kindle)", fundo: "#F5F2EB", cartao: "#FCFBF7", fonte: "#2C2623" },
+  { nome: "Azul Porcelana", fundo: "#EEF4F8", cartao: "#FFFFFF", fonte: "#1E3A5F" },
+  { nome: "Verde Suave", fundo: "#EFF6F2", cartao: "#FFFFFF", fonte: "#1B3B2B" },
+  { nome: "Modo Noturno", fundo: "#0F172A", cartao: "#1E293B", fonte: "#F1F5F9" },
 ];
 
 export function SeletorTema() {
@@ -2699,14 +2674,35 @@ export function SeletorTema() {
   const [corCartao, setCorCartao] = useState("#FFFFFF");
   const [corFonte, setCorFonte] = useState("#1E293B");
 
+  const aplicarCoresNoDOM = (fundo: string, cartao: string, fonte: string) => {
+    try {
+      document.body.style.backgroundColor = fundo;
+      document.body.style.color = fonte;
+
+      const rootEl = document.getElementById("simulado-root");
+      if (rootEl) {
+        rootEl.style.backgroundColor = fundo;
+        rootEl.style.color = fonte;
+      }
+
+      document.querySelectorAll("#simulado-root header, #simulado-root aside, #simulado-root .bg-white, #simulado-root [class*='bg-white/']").forEach((el) => {
+        (el as HTMLElement).style.backgroundColor = cartao;
+        (el as HTMLElement).style.backgroundImage = "none";
+      });
+    } catch (e) {}
+  };
+
   useEffect(() => {
     try {
       const salvo = localStorage.getItem("simulado_tema_cores");
       if (salvo) {
         const parsed = JSON.parse(salvo);
-        if (parsed.fundo) setCorFundo(parsed.fundo);
-        if (parsed.cartao) setCorCartao(parsed.cartao);
-        if (parsed.fonte) setCorFonte(parsed.fonte);
+        if (parsed.fundo && parsed.cartao && parsed.fonte) {
+          setCorFundo(parsed.fundo);
+          setCorCartao(parsed.cartao);
+          setCorFonte(parsed.fonte);
+          aplicarCoresNoDOM(parsed.fundo, parsed.cartao, parsed.fonte);
+        }
       }
     } catch (e) {}
   }, []);
@@ -2720,35 +2716,12 @@ export function SeletorTema() {
         "simulado_tema_cores",
         JSON.stringify({ fundo: novoFundo, cartao: novoCartao, fonte: novaFonte })
       );
+      aplicarCoresNoDOM(novoFundo, novoCartao, novaFonte);
     } catch (e) {}
   };
 
   return (
     <div className="relative">
-      <style>{`
-        body, #simulado-root {
-          background: ${corFundo} !important;
-          color: ${corFonte} !important;
-        }
-        #simulado-root header,
-        #simulado-root aside,
-        #simulado-root .bg-white,
-        #simulado-root [class*="bg-white/"] {
-          background-color: ${corCartao} !important;
-          background-image: none !important;
-        }
-        #simulado-root h1,
-        #simulado-root h2,
-        #simulado-root h3,
-        #simulado-root .text-slate-800,
-        #simulado-root .text-slate-700,
-        #simulado-root .text-zinc-900,
-        #simulado-root .text-zinc-800,
-        #simulado-root .text-zinc-700 {
-          color: ${corFonte} !important;
-        }
-      `}</style>
-
       <button
         type="button"
         onClick={() => setAberto(!aberto)}
@@ -2796,21 +2769,9 @@ export function SeletorTema() {
                 >
                   <span>{t.nome}</span>
                   <div className="flex items-center gap-1">
-                    <span
-                      className="w-4 h-4 rounded-full border border-black/10"
-                      style={{ backgroundColor: t.fundo }}
-                      title="Cor do Fundo"
-                    />
-                    <span
-                      className="w-4 h-4 rounded-full border border-black/10"
-                      style={{ backgroundColor: t.cartao }}
-                      title="Cor do Cartão"
-                    />
-                    <span
-                      className="w-4 h-4 rounded-full border border-black/10"
-                      style={{ backgroundColor: t.fonte }}
-                      title="Cor da Fonte"
-                    />
+                    <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: t.fundo }} />
+                    <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: t.cartao }} />
+                    <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: t.fonte }} />
                   </div>
                 </button>
               );
