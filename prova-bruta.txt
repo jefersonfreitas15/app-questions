@@ -1,0 +1,194 @@
+BANCA: FGV
+ORGAO: TCE
+ANO: 2025
+DISCIPLINA: Direito Administrativo
+ASSUNTO: Nova Lei de Licitações (Lei 14.133/2021)
+GABARITO: D
+COMENTARIO: Nos termos do art. 28 da Lei nº 14.133/2021, são modalidades de licitação: pregão, concorrência, concurso, leilão e diálogo competitivo. A tomada de preços e o convite (da antiga Lei 8.666/93) e o RDC foram extintos.
+De acordo com a Lei nº 14.133/2021 (Nova Lei de Licitações e Contratos Administrativos), foram extintas as antigas modalidades Tomada de Preços e Convite, passando a vigorar como nova modalidade licitatória voltada para contratações que envolvam inovação tecnológica ou técnica de solução impossível de ser definida previamente pela Administração:
+A) Pregão Presencial Especial.
+B) Consulta Pública Vinculante.
+C) Regime Diferenciado de Contratações (RDC).
+D) Diálogo Competitivo.
+---
+BANCA: CEBRASPE
+ORGAO: TCU
+ANO: 2025
+DISCIPLINA: Controle Externo
+ASSUNTO: Decisões dos Tribunais de Contas (Eficácia de Título Executivo)
+GABARITO: A
+COMENTARIO: Conforme o art. 71, § 3º, da CF/88, as decisões do Tribunal de que resulte imputação de débito ou multa terão eficácia de título executivo (extrajudicial). Segundo o STF (Tema 642), a legitimidade para executar esse título cabe ao ente público beneficiário da condenação (e não ao próprio Tribunal de Contas).
+Nos termos do art. 71, § 3º, da Constituição Federal e da jurisprudência consolidada do Supremo Tribunal Federal, as decisões dos Tribunais de Contas de que resulte imputação de débito ou aplicação de multa:
+A) Possuem eficácia de título executivo extrajudicial, cabendo a execução judicial à procuradoria do ente público beneficiário do ressarcimento.
+B) Dependem de homologação prévia pelo Poder Legislativo para adquirirem força executiva.
+C) Constituem títulos executivos judiciais executados diretamente pelo Ministério Público de Contas.
+D) Permitem o bloqueio direto e definitivo de bens pelo próprio Tribunal de Contas sem intervenção judicial.
+---
+BANCA: FGV
+ORGAO: SEFAZ
+ANO: 2025
+DISCIPLINA: Direito Financeiro e AFO
+ASSUNTO: Princípios Orçamentários
+GABARITO: C
+COMENTARIO: O princípio da Não Afetação (ou Não Vinculação) da Receita de Impostos (art. 167, IV, da CF/88) veda a vinculação de receita de impostos a órgão, fundo ou despesa, ressalvadas as exceções constitucionais (saúde, educação, administração tributária, repartição de receitas e garantias).
+O princípio orçamentário consagrado no art. 167, inciso IV, da Constituição Federal, que proíbe a vinculação prévia da receita de impostos a órgão, fundo ou despesa específica — ressalvadas as destinações constitucionais para saúde, educação e atividades da administração tributária — é denominado princípio da:
+A) Exclusividade Orçamentária.
+B) Universalidade.
+C) Não Afetação das Receitas de Impostos.
+D) Unidade de Tesouraria.
+---
+BANCA: FCC
+ORGAO: TCE
+ANO: 2024
+DISCIPLINA: Direito Financeiro e AFO
+ASSUNTO: Lei de Responsabilidade Fiscal (LRF - Despesa com Pessoal)
+GABARITO: B
+COMENTARIO: Segundo os arts. 19 e 20 da LRF (LC nº 101/2000), o limite total de despesa com pessoal nos Estados é de 60% da Receita Corrente Líquida (RCL), sendo 49% para o Executivo, 6% para o Judiciário, 3% para o Legislativo (incluindo o TCE) e 2% para o Ministério Público Estadual.
+Nos termos da Lei Complementar nº 101/2000 (Lei de Responsabilidade Fiscal), o limite máximo da despesa total com pessoal para a esfera Estadual corresponde a 60% da Receita Corrente Líquida (RCL), sendo repartido na seguinte proporção para o Poder Executivo e para o Poder Legislativo (incluído o Tribunal de Contas do Estado), respectivamente:
+A) 50% e 3%.
+B) 49% e 3%.
+C) 54% e 6%.
+D) 48,6% e 2,5%.
+---
+BANCA: FGV
+ORGAO: TCE
+ANO: 2025
+DISCIPLINA: Contabilidade Pública
+ASSUNTO: Suprimento de Fundos (Regime de Adiantamento)
+GABARITO: C
+COMENTARIO: De acordo com os arts. 68 e 69 da Lei nº 4.320/1964, o regime de adiantamento (suprimento de fundos) é aplicável aos casos de despesas expressamente definidos em lei e consiste na entrega de numerário a servidor, sempre precedida de empenho na dotação própria, não podendo ser concedido a servidor em alcance nem a responsável por dois adiantamentos.
+A respeito do Suprimento de Fundos (regime de adiantamento) previsto nos artigos 68 e 69 da Lei nº 4.320/1964, assinale a afirmativa correta:
+A) Independe de prévio empenho orçamentário, sendo contabilizado apenas no momento da prestação de contas pelo servidor.
+B) Pode ser concedido a servidor declarado em alcance, desde que mediante autorização expressa do ordenador de despesas.
+C) Consiste na entrega de numerário a servidor, sempre precedida de empenho na dotação própria, sendo vedada a concessão a responsável por dois adiantamentos.
+D) É a modalidade padrão para pagamento de folha salarial e encargos previdenciários de caráter continuado.
+---
+BANCA: CEBRASPE
+ORGAO: CGU
+ANO: 2025
+DISCIPLINA: Direito Administrativo
+ASSUNTO: Improbidade Administrativa (Lei 8.429/92 atualizada pela Lei 14.230/21)
+GABARITO: B
+COMENTARIO: Após a reforma da Lei nº 14.230/2021, a Lei de Improbidade Administrativa (Lei 8.429/92) deixou de admitir a modalidade culposa em qualquer hipótese. Hoje, todos os atos de improbidade (arts. 9º, 10 e 11) exigem a comprovação de DOLO específico (vontade livre e consciente de alcançar o resultado ilícito).
+Considerando as alterações promovidas pela Lei nº 14.230/2021 na Lei de Improbidade Administrativa (Lei nº 8.429/1992), a configuração de qualquer ato de improbidade administrativa exige, obrigatoriamente:
+A) A demonstração de enriquecimento ilícito cumulativo com dano efetivo ao erário, admitindo-se a culpa grave.
+B) A comprovação de conduta dolosa com fim específico de obter proveito ou causar lesão, tendo sido extinta a modalidade culposa.
+C) A aprovação prévia das contas pelo Tribunal de Contas competente como condição de procedibilidade da ação.
+D) O afastamento cautelar automático do agente público pelo prazo improrrogável de 360 dias.
+---
+BANCA: FGV
+ORGAO: TJ
+ANO: 2025
+DISCIPLINA: Direito Constitucional
+ASSUNTO: Controle de Constitucionalidade
+GABARITO: D
+COMENTARIO: Nos termos do art. 103 da CF/88 e da jurisprudência do STF, são legitimados universais (não precisam demonstrar pertinência temática): Presidente da República, Mesas do Senado e da Câmara, Procurador-Geral da República, Conselho Federal da OAB e Partido Político com representação no Congresso Nacional. Governadores, Mesas de Assembleias e Confederações Sindicais são legitimados especiais (exigem pertinência temática).
+No âmbito do Controle Concentrado de Constitucionalidade perante o Supremo Tribunal Federal (art. 103 da CF/88), constitui legitimado ativo universal — dispensado da comprovação de pertinência temática para a propositura de Ação Direta de Inconstitucionalidade (ADI):
+A) O Governador de Estado ou do Distrito Federal.
+B) A Mesa de Assembleia Legislativa ou da Câmara Legislativa do Distrito Federal.
+C) A Confederação Sindical ou Entidade de Classe de âmbito nacional.
+D) O Conselho Federal da Ordem dos Advogados do Brasil (OAB).
+---
+BANCA: FGV
+ORGAO: TCE
+ANO: 2025
+DISCIPLINA: Língua Portuguesa
+ASSUNTO: Uso dos Pronomes Relativos (Onde vs Aonde vs Em que)
+GABARITO: A
+COMENTARIO: O pronome 'onde' indica permanência em lugar físico (equivale a 'no qual'). 'Aonde' indica movimento para algum lugar (com verbos que exigem a preposição 'a', como ir, chegar). Quando o antecedente não é lugar físico (ex: 'relatório', 'situação', 'reunião'), a norma culta recomenda 'em que' ou 'no qual'.
+Assinale a alternativa em que o emprego do pronome relativo respeita integralmente as regras da norma-padrão da língua portuguesa:
+A) A sessão plenária em que foram julgadas as contas anuais estendeu-se até o início da noite.
+B) O parecer técnico onde o auditor apontou as ressalvas foi encaminhado ao relator.
+C) A repartição pública aonde os servidores trabalham diariamente passou por reforma estrutural.
+D) O município onde os fiscais se dirigiram ontem pela manhã fica no interior do Estado.
+---
+BANCA: CEBRASPE
+ORGAO: ANATEL
+ANO: 2024
+DISCIPLINA: Língua Portuguesa
+ASSUNTO: Colocação Pronominal (Próclise, Mesóclise e Ênclise)
+GABARITO: C
+COMENTARIO: Palavras negativas ('não', 'nunca', 'jamais'), advérbios sem vírgula e pronomes relativos/indefinidos/subordinativos atraem o pronome oblíquo átono para antes do verbo (próclise obrigatória). Além disso, nunca se inicia período com pronome oblíquo átono na norma-padrão.
+De acordo com as regras de colocação pronominal da norma-padrão, o uso da próclise é obrigatório em:
+A) Entregou-se o documento no protocolo central dentro do prazo legal.
+B) Realizar-se-á na próxima semana o seminário de atualização em gestão pública.
+C) Nunca se identificaram falhas semelhantes nos sistemas auditados anteriormente.
+D) Ao encerrar o expediente, os técnicos retiraram-se da sala de reuniões.
+---
+BANCA: FGV
+ORGAO: SEFAZ
+ANO: 2025
+DISCIPLINA: Raciocínio Lógico
+ASSUNTO: Conjuntos e Diagramas de Venn
+GABARITO: B
+COMENTARIO: Pelo Princípio da Inclusão-Exclusão para dois conjuntos: Total = n(A) + n(B) - n(A ∩ B) + Nenhum. Logo: 80 = 52 + 45 - x + 8 => 80 = 105 - x => x = 105 - 80 = 25 servidores.
+Em uma secretaria municipal com 80 servidores, verificou-se que 52 utilizam o sistema de processo eletrônico (e-Proc), 45 utilizam o sistema de gestão de folha (GPI) e 8 servidores não utilizam nenhum desses dois sistemas. O número de servidores que utilizam simultaneamente ambos os sistemas é igual a:
+A) 17
+B) 25
+C) 32
+D) 35
+---
+BANCA: FCC
+ORGAO: TRT
+ANO: 2024
+DISCIPLINA: Raciocínio Lógico
+ASSUNTO: Porcentagem e Aumentos Sucessivos
+GABARITO: C
+COMENTARIO: Dois aumentos sucessivos de 10% e 20% equivalem a multiplicar o valor por 1,10 x 1,20 = 1,32. Portanto, o aumento acumulado é de 32% (e não 30%).
+A dotação orçamentária de um programa governamental recebeu uma suplementação de 10% no primeiro semestre e, no segundo semestre, um novo acréscimo de 20% calculado sobre o valor já atualizado. Em relação à dotação inicial do início do ano, o aumento percentual acumulado foi de:
+A) 28%
+B) 30%
+C) 32%
+D) 35%
+---
+BANCA: FGV
+ORGAO: TCE
+ANO: 2025
+DISCIPLINA: Informática e TI
+ASSUNTO: Banco de Dados Relacional e SQL
+GABARITO: D
+COMENTARIO: Na linguagem SQL, a cláusula WHERE filtra linhas individuais antes do agrupamento (GROUP BY), enquanto a cláusula HAVING é utilizada especificamente para filtrar grupos resultantes da cláusula GROUP BY (frequentemente com funções de agregação como COUNT, SUM, AVG).
+Em um banco de dados relacional que utiliza a linguagem SQL, um auditor deseja agrupar as despesas empenhadas por órgão (utilizando a cláusula GROUP BY) e exibir apenas os órgãos cuja soma total de empenhos (SUM) ultrapasse R$ 1.000.000,00. Para aplicar essa condição de filtro diretamente sobre o resultado agrupado, deve-se utilizar a cláusula:
+A) ORDER BY
+B) DISTINCT
+C) WHERE
+D) HAVING
+---
+BANCA: CEBRASPE
+ORGAO: TCU
+ANO: 2025
+DISCIPLINA: Informática e TI
+ASSUNTO: Lei Geral de Proteção de Dados (LGPD - Lei 13.709/2018)
+GABARITO: A
+COMENTARIO: Segundo o art. 5º, VIII, da LGPD (Lei 13.709/2018), o Encarregado (DPO - Data Protection Officer) é a pessoa indicada pelo controlador e operador para atuar como canal de comunicação entre o controlador, os titulares dos dados e a Autoridade Nacional de Proteção de Dados (ANPD).
+Nos termos da Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018), a pessoa indicada pelo controlador para atuar como canal de comunicação entre a instituição pública, os titulares dos dados pessoais e a Autoridade Nacional de Proteção de Dados (ANPD) é denominada:
+A) Encarregado pelo tratamento de dados pessoais (DPO).
+B) Operador de Segurança Cibernética.
+C) Auditor de Conformidade Digital.
+D) Agente de Criptografia Institucional.
+---
+BANCA: FGV
+ORGAO: CGU
+ANO: 2025
+DISCIPLINA: Administração Pública
+ASSUNTO: Modelos de Administração Pública (Patrimonialista, Burocrática e Gerencial)
+GABARITO: C
+COMENTARIO: A Administração Pública Gerencial (Nova Gestão Pública), consolidada no Brasil a partir do PDRAE de 1995, caracteriza-se pela orientação para o cidadão-usuário e pelo controle a posteriori (por resultados/indicadores de desempenho), ao passo que a Burocrática foca no controle a priori (nos processos/meios).
+Na evolução histórica dos modelos teóricos da Administração Pública brasileira, a transição do modelo Burocrático Weberiano para a Administração Pública Gerencial (Nova Gestão Pública) teve como uma de suas principais diretrizes:
+A) A substituição do concurso público pelo livre provimento de cargos técnicos.
+B) A eliminação completa dos controles formais de legalidade nas contratações públicas.
+C) O deslocamento da ênfase do controle rígido dos meios e procedimentos (a priori) para o controle de resultados e indicadores de desempenho (a posteriori).
+D) A centralização das decisões operacionais no núcleo estratégico ministerial, extinguindo as agências reguladoras.
+---
+BANCA: FCC
+ORGAO: TCE
+ANO: 2024
+DISCIPLINA: Administração Pública
+ASSUNTO: Indicadores de Desempenho (Eficiência, Eficácia e Efetividade)
+GABARITO: B
+COMENTARIO: Na gestão pública: Eficiência = fazer da melhor forma com o menor custo/uso racional dos recursos (relação meios/insumos); Eficácia = atingir as metas previstas (quantidade de produtos/entregas); Efetividade = impacto real e transformação social gerada na vida da população a médio e longo prazo.
+Na avaliação de políticas públicas e auditoria operacional, quando uma equipe de fiscalização analisa se um programa de capacitação e saúde básica gerou impacto real e duradouro na redução da mortalidade e na melhoria da qualidade de vida da população local, está avaliando a dimensão da:
+A) Economicidade.
+B) Efetividade.
+C) Eficiência.
+D) Eficácia Estrita.

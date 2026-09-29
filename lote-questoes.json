@@ -1,0 +1,194 @@
+[
+  {
+    "banca": "FGV",
+    "orgao": "TCE",
+    "ano": 2025,
+    "area": "Conhecimentos Específicos",
+    "disciplina": "Controle Externo",
+    "assunto": "Competências Constitucionais dos Tribunais de Contas",
+    "enunciado": "No exercício do controle externo da Administração Pública, compete constitucionalmente aos Tribunais de Contas apreciar as contas prestadas anualmente pelo Chefe do Poder Executivo e julgar as contas dos demais administradores públicos. Acerca da sustação de contratos administrativos em caso de ilegalidade, a Constituição Federal estabelece que:",
+    "explicacao": "Nos termos do art. 71, § 1º e § 2º, da CF/88, no caso de CONTRATO, o ato de sustação será adotado diretamente pelo Poder Legislativo (Congresso Nacional/Assembleia/Câmara), que solicitará ao Poder Executivo as medidas cabíveis. Apenas se o Legislativo ou o Executivo, no prazo de 90 dias, não efetivar as medidas, o Tribunal de Contas decidirá a respeito.",
+    "alternativas": [
+      { "texto": "O Tribunal de Contas susta imediatamente o contrato administrativo, comunicando a decisão ao Poder Legislativo em até 30 dias.", "is_correta": false },
+      { "texto": "O ato de sustação de contrato é adotado diretamente pelo Poder Legislativo, cabendo ao Tribunal de Contas decidir a respeito caso o Legislativo ou o Executivo não efetivem as medidas no prazo de noventa dias.", "is_correta": true },
+      { "texto": "A sustação de contratos administrativos depende de decisão judicial prévia provocada pelo Ministério Público de Contas.", "is_correta": false },
+      { "texto": "O Tribunal de Contas pode sustar diretamente contratos de concessão, mas depende do Legislativo para sustar contratos de obras públicas.", "is_correta": false }
+    ]
+  },
+  {
+    "banca": "CEBRASPE",
+    "orgao": "TCU",
+    "ano": 2025,
+    "area": "Conhecimentos Específicos",
+    "disciplina": "Controle Externo",
+    "assunto": "Tomada de Contas Especial (TCE)",
+    "enunciado": "A Tomada de Contas Especial (TCE) é um processo administrativo devidamente formalizado, com rito próprio, para apurar responsabilidade por ocorrência de dano à administração pública. Constitui pressuposto indispensável para a instauração da Tomada de Contas Especial:",
+    "explicacao": "Os pressupostos para instauração de TCE são: existência de dano ao erário (prejuízo quantificável), esgotamento das medidas administrativas internas para ressarcimento sem sucesso, e identificação dos responsáveis e do nexo causal.",
+    "alternativas": [
+      { "texto": "A comprovação de dolo específico do agente público, sendo incabível nos casos de culpa em sentido estrito.", "is_correta": false },
+      { "texto": "O prévio esgotamento das medidas administrativas internas para elidir o dano ao erário sem a obtenção do devido ressarcimento.", "is_correta": true },
+      { "texto": "O trânsito em julgado de ação de improbidade administrativa referente ao mesmo fato gerador.", "is_correta": false },
+      { "texto": "A autorização prévia da Comissão Mista de Orçamento do Poder Legislativo.", "is_correta": false }
+    ]
+  },
+  {
+    "banca": "FGV",
+    "orgao": "SEFAZ",
+    "ano": 2025,
+    "area": "Conhecimentos Específicos",
+    "disciplina": "Direito Financeiro e AFO",
+    "assunto": "Restos a Pagar e Despesas de Exercícios Anteriores",
+    "enunciado": "Determinado ente federativo empenhou regularmente uma despesa com manutenção predial em novembro de 2024. O serviço foi integralmente prestado e atestado em dezembro de 2024, mas o pagamento não ocorreu até 31/12/2024. Em 2025, essa obrigação financeira deverá ser classificada e paga como:",
+    "explicacao": "De acordo com o art. 36 da Lei nº 4.320/1964, as despesas empenhadas e já liquidadas (serviço prestado e atestado) dentro do exercício financeiro, mas não pagas até 31 de dezembro, são inscritas em Restos a Pagar Processados.",
+    "alternativas": [
+      { "texto": "Despesa de Exercícios Anteriores (DEA), mediante novo empenho no orçamento de 2025.", "is_correta": false },
+      { "texto": "Restos a Pagar Não Processados, sujeitos à verificação de liquidação em 2025.", "is_correta": false },
+      { "texto": "Restos a Pagar Processados, pois a despesa já havia percorrido o estágio da liquidação no exercício de origem.", "is_correta": true },
+      { "texto": "Suprimento de Fundos Extraorçamentário, dispensando inscrição contábil.", "is_correta": false }
+    ]
+  },
+  {
+    "banca": "FCC",
+    "orgao": "TCE",
+    "ano": 2024,
+    "area": "Conhecimentos Específicos",
+    "disciplina": "Direito Financeiro e AFO",
+    "assunto": "Créditos Adicionais (Lei 4.320/1964)",
+    "enunciado": "Em relação às modalidades de créditos adicionais previstas na Lei nº 4.320/1964 e na Constituição Federal, aqueles destinados a despesas urgentes eimprevisíveis, como em caso de guerra, comoção intestina ou calamidade pública, denominam-se:",
+    "explicacao": "Art. 41, III, da Lei 4.320/64 e art. 167, § 3º, da CF/88: os créditos extraordinários destinam-se a despesas urgentes e imprevisíveis (guerra, comoção interna ou calamidade pública), podendo ser abertos por medida provisória ou decreto do Executivo com imediata ciência ao Legislativo.",
+    "alternativas": [
+      { "texto": "Créditos Suplementares, que dependem de indicação obrigatória de superávit financeiro.", "is_correta": false },
+      { "texto": "Créditos Especiais, destinados ao reforço de dotação já existente na LOA.", "is_correta": false },
+      { "texto": "Créditos Extraordinários, abertos para atender a despesas imprevisíveis e urgentes.", "is_correta": true },
+      { "texto": "Transposições Orçamentárias de Contingência, limitadas a 10% da reserva.", "is_correta": false }
+    ]
+  },
+  {
+    "banca": "FGV",
+    "orgao": "TCE",
+    "ano": 2025,
+    "area": "Conhecimentos Específicos",
+    "disciplina": "Contabilidade Pública",
+    "assunto": "Variações Patrimoniais (VPA e VPD)",
+    "enunciado": "Sob a ótica patrimonial da Contabilidade Aplicada ao Setor Público (MCASP), o lançamento de ofício do crédito tributário referente ao IPTU pelo Município, antes mesmo da arrecadação financeira, gera no patrimônio público uma:",
+    "explicacao": "Pelo regime de competência patrimonial (MCASP), o reconhecimento do crédito tributário no momento do fato gerador/lançamento aumenta o Ativo (Créditos Tributários a Receber) sem contrapartida no Passivo, gerando uma Variação Patrimonial Aumentativa (VPA).",
+    "alternativas": [
+      { "texto": "Receita Orçamentária Efetiva já no estágio de recolhimento.", "is_correta": false },
+      { "texto": "Variação Patrimonial Aumentativa (VPA), pelo reconhecimento do direito a receber no ativo.", "is_correta": true },
+      { "texto": "Mutação Passiva Compensatória no Balanço Orçamentário.", "is_correta": false },
+      { "texto": "Variação Patrimonial Diminutiva (VPD) até que ocorra a baixa do tributo.", "is_correta": false }
+    ]
+  },
+  {
+    "banca": "FGV",
+    "orgao": "TJ",
+    "ano": 2025,
+    "area": "Conhecimentos Específicos",
+    "disciplina": "Direito Administrativo",
+    "assunto": "Atos Administrativos (Anulação e Revogação)",
+    "enunciado": "De acordo com a Súmula 473 do Supremo Tribunal Federal e o regime jurídico dos atos administrativos, a Administração Pública pode declarar a nulidade dos seus próprios atos quando eivados de vícios que os tornem ilegais, ou revogá-los por motivo de conveniência ou oportunidade. Sobre a revogação, é correto afirmar que:",
+    "explicacao": "A revogação incide apenas sobre atos discricionários válidos (legais), por razões de mérito (conveniência e oportunidade), produzindo efeitos prospectivos (ex nunc) e respeitando sempre os direitos adquiridos. Atos vinculados ou atos já exauridos (consumados) são irrevogáveis.",
+    "alternativas": [
+      { "texto": "Incide sobre atos vinculados e discricionários, operando efeitos retroativos (ex tunc).", "is_correta": false },
+      { "texto": "Pode ser decretada pelo Poder Judiciário no exercício de sua função jurisdicional típica.", "is_correta": false },
+      { "texto": "Recai sobre atos válidos por motivo de mérito administrativo, produzindo efeitos não retroativos (ex nunc) e respeitando os direitos adquiridos.", "is_correta": true },
+      { "texto": "Alcança os atos administrativos que já exauriram integralmente os seus efeitos jurídicos.", "is_correta": false }
+    ]
+  },
+  {
+    "banca": "CEBRASPE",
+    "orgao": "TRE",
+    "ano": 2024,
+    "area": "Conhecimentos Específicos",
+    "disciplina": "Direito Constitucional",
+    "assunto": "Administração Pública na CF/88 (Art. 37)",
+    "enunciado": "Acerca das disposições constitucionais aplicáveis aos servidores públicos e à Administração Pública (art. 37 da CF/88), assinale a opção correta:",
+    "explicacao": "Conforme o art. 37, XVI, da CF/88 e jurisprudência pacífica do STF (Tema 377), havendo compatibilidade de horários, é permitida a acumulação remunerada de dois cargos de professor, de um cargo de professor com outro técnico ou científico, ou de dois cargos ou empregos privativos de profissionais de saúde com profissões regulamentadas, submetendo-se o teto remuneratório a cada cargo isoladamente.",
+    "alternativas": [
+      { "texto": "O prazo de validade do concurso público é de até três anos, prorrogável uma vez por igual período.", "is_correta": false },
+      { "texto": "As funções de confiança destinam-se apenas às atribuições de direção, chefia e assessoramento e devem ser exercidas exclusivamente por servidores ocupantes de cargo efetivo.", "is_correta": true },
+      { "texto": "A proibição de acumular cargos públicos aplica-se à administração direta, mas não abrange as sociedades de economia mista.", "is_correta": false },
+      { "texto": "A responsabilidade civil das pessoas jurídicas de direito público por danos causados por seus agentes depende da comprovação de culpa do servidor.", "is_correta": false }
+    ]
+  },
+  {
+    "banca": "FGV",
+    "orgao": "CAMARA",
+    "ano": 2025,
+    "area": "Conhecimentos Gerais",
+    "disciplina": "Língua Portuguesa",
+    "assunto": "Concordância Verbal",
+    "enunciado": "Assinale a alternativa em que a concordância verbal está inteiramente de acordo com a norma-padrão da língua portuguesa:",
+    "explicacao": "O verbo 'haver' no sentido de existir ou indicando tempo decorrido é impessoal, devendo permanecer na 3ª pessoa do singular ('Havia muitos processos' / 'Há dois anos'). Já o verbo 'fazer' indicando tempo decorrido também é impessoal ('Faz cinco meses'). Na voz passiva sintética ('Analisaram-se os relatórios'), o verbo concorda no plural com o sujeito paciente ('os relatórios').",
+    "alternativas": [
+      { "texto": "Haviam diversos processos aguardando parecer técnico no setor de auditoria.", "is_correta": false },
+      { "texto": "Fazem dois anos que o novo sistema de protocolo eletrônico foi implantado.", "is_correta": false },
+      { "texto": "Analisaram-se detalhadamente todos os relatórios contábeis do exercício anterior.", "is_correta": true },
+      { "texto": "Mais de um servidor entregaram os formulários fora do prazo regulamentar.", "is_correta": false }
+    ]
+  },
+  {
+    "banca": "FCC",
+    "orgao": "TRT",
+    "ano": 2024,
+    "area": "Conhecimentos Gerais",
+    "disciplina": "Língua Portuguesa",
+    "assunto": "Pontuação e Sintaxe",
+    "enunciado": "O emprego das vírgulas está plenamente justificado pela mesma regra sintática nos dois casos em:",
+    "explicacao": "Na opção correta, ambos os trechos entre vírgulas ('órgão de controle externo' e 'capital do Estado') exercem a função sintática de aposto explicativo.",
+    "alternativas": [
+      { "texto": "O Tribunal de Contas, órgão de controle externo, emitiu parecer; em Porto Velho, capital do Estado, realizou-se o seminário técnico.", "is_correta": true },
+      { "texto": "Os auditores, ontem à tarde, finalizaram a inspeção; compraram livros, cadernos e pastas para o arquivo.", "is_correta": false },
+      { "texto": "Caso haja necessidade, convocaremos nova reunião; o diretor, porém, preferiu adiar o encontro.", "is_correta": false },
+      { "texto": "Senhores candidatos, confiram o gabarito; o edital, conforme previsto, foi publicado no Diário Oficial.", "is_correta": false }
+    ]
+  },
+  {
+    "banca": "FGV",
+    "orgao": "SEFAZ",
+    "ano": 2025,
+    "area": "Conhecimentos Gerais",
+    "disciplina": "Raciocínio Lógico",
+    "assunto": "Equivalência Lógica e Contrapositiva",
+    "enunciado": "A proposição condicional 'Se o processo está instruído, então o parecer é emitido' é logicamente equivalente à proposição:",
+    "explicacao": "Uma condicional 'Se P, então Q' possui duas equivalências clássicas: 1) Contrapositiva: 'Se não Q, então não P' ('Se o parecer não é emitido, então o processo não está instruído'); 2) Disjunção (Regra do NEYMAR): 'Não P ou Q' ('O processo não está instruído ou o parecer é emitido').",
+    "alternativas": [
+      { "texto": "Se o processo não está instruído, então o parecer não é emitido.", "is_correta": false },
+      { "texto": "Se o parecer é emitido, então o processo está instruído.", "is_correta": false },
+      { "texto": "Se o parecer não é emitido, então o processo não está instruído.", "is_correta": true },
+      { "texto": "O processo está instruído e o parecer não é emitido.", "is_correta": false }
+    ]
+  },
+  {
+    "banca": "CEBRASPE",
+    "orgao": "PF",
+    "ano": 2024,
+    "area": "Conhecimentos Gerais",
+    "disciplina": "Informática e TI",
+    "assunto": "Computação em Nuvem (IaaS, PaaS e SaaS)",
+    "enunciado": "Na arquitetura de computação em nuvem (Cloud Computing), quando uma instituição pública contrata um serviço de correio eletrônico e edição de documentos diretamente via navegador web, sem precisar gerenciar servidores, sistemas operacionais ou instalações locais, ela utiliza o modelo de serviço denominado:",
+    "explicacao": "No modelo SaaS (Software as a Service / Software como Serviço), o usuário final consome a aplicação pronta diretamente via rede/navegador (como Google Workspace, Microsoft 365). No PaaS, contrata-se o ambiente de desenvolvimento/banco; no IaaS, a infraestrutura bruta (máquinas virtuais e redes).",
+    "alternativas": [
+      { "texto": "IaaS (Infrastructure as a Service).", "is_correta": false },
+      { "texto": "PaaS (Platform as a Service).", "is_correta": false },
+      { "texto": "SaaS (Software as a Service).", "is_correta": true },
+      { "texto": "On-Premises Virtualizado.", "is_correta": false }
+    ]
+  },
+  {
+    "banca": "FGV",
+    "orgao": "CGU",
+    "ano": 2025,
+    "area": "Conhecimentos Gerais",
+    "disciplina": "Administração Pública",
+    "assunto": "Planejamento Estratégico (Matriz SWOT e BSC)",
+    "enunciado": "Na elaboração do planejamento estratégico de um órgão público com o uso da análise SWOT (FOFA), a aprovação de uma nova legislação federal que amplia as linhas de financiamento para modernização tecnológica dos municípios deve ser classificada pelo gestor municipal como:",
+    "explicacao": "Na matriz SWOT, fatores internos (controláveis pela organização) são Forças ou Fraquezas; fatores externos (do macroambiente, fora do controle direto do órgão) são Oportunidades (quando favoráveis) ou Ameaças (quando desfavoráveis). Uma linha de financiamento externa favorável é uma Oportunidade.",
+    "alternativas": [
+      { "texto": "Força (ambiente interno).", "is_correta": false },
+      { "texto": "Fraqueza (ambiente interno).", "is_correta": false },
+      { "texto": "Oportunidade (ambiente externo).", "is_correta": true },
+      { "texto": "Ameaça (ambiente externo).", "is_correta": false }
+    ]
+  }
+]
