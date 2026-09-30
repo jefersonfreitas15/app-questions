@@ -1683,12 +1683,13 @@ export function BotaoNovaQuestao() {
         );
       }
 
-      // Tenta salvar no Supabase. Se o celular bloquear a conexão (Load failed), 
-      // ele ignora e segue em frente sem explodir o erro na tela.
+      // Tenta salvar no Supabase e AVISA se der erro
       try {
         await gravarListaDeQuestoesNoBanco(novasQuestoes);
-      } catch (dbError) {
-        console.warn("Falha de rede ao salvar no banco, mas as questões foram geradas.", dbError);
+      } catch (dbError: any) {
+        alert("O Supabase bloqueou o salvamento: " + (dbError.message || "Erro desconhecido"));
+        setGerandoIa(false);
+        return; // Para tudo e não recarrega a página
       }
 
       setModalIaAberto(false);
