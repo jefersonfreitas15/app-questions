@@ -4,18 +4,16 @@ import Script from 'next/script'
 import './globals.css'
 import { Geist } from "next/font/google"
 import { cn } from "@/lib/utils"
+import { FacebookPixel } from "@/components/pixel" // <-- Importação do componente do Pixel
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
-
-// Quando criar o seu Pixel no Gerenciador de Anúncios da Meta, cole o número aqui:
-const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || ""
 
 export const metadata: Metadata = {
   title: 'Qpro Concursos | Plataforma Inteligente de Questões',
   description:
     'Plataforma inteligente de questões comentadas para concursos públicos com filtros em cascata, caderno de erros, tesourinha e gerador de questões com IA.',
   applicationName: 'Qpro Concursos',
-  manifest: '/manifest.json', // <-- Adicione esta linha para registar o manifesto
+  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -78,25 +76,11 @@ export default function RootLayout({
           `}
         </Script>
 
-        {/* Script do Pixel da Meta Ads */}
-        {META_PIXEL_ID && (
-          <Script id="meta-pixel" strategy="afterInteractive">
-            {`
-              !function(f,b,e,v,n,t,s)
-              {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-              n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-              if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-              n.queue=[];t=b.createElement(e);t.async=!0;
-              t.src=v;s=b.getElementsByTagName(e)[0];
-              s.parentNode.insertBefore(t,s)}(window, document,'script',
-              'https://connect.facebook.net/en_US/fbevents.js');
-              fbq('init', '${META_PIXEL_ID}');
-              fbq('track', 'PageView');
-            `}
-          </Script>
-        )}
-
         {children}
+        
+        {/* Componente do Pixel carregado em todas as páginas */}
+        <FacebookPixel />
+
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
