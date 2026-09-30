@@ -3,8 +3,7 @@
 import { ArrowRight, BrainCircuit, Target, BarChart3, MoonStar, CheckCircle2, XCircle } from "lucide-react";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+
 export default function LandingPage() {
   // Cole seu link da Kiwify aqui também para quem quiser comprar direto sem testar
   const LINK_CHECKOUT = "https://pay.kiwify.com.br/VE1GbyL";
