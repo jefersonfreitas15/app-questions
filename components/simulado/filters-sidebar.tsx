@@ -90,7 +90,7 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
 
     startTransition(() => {
       const qs = params.toString();
-      router.push(qs ? `/?${qs}` : "/");
+      router.push(qs ? `/app?${qs}` : "/app"); // <-- Agora manda para o aplicativo
     });
   };
 
@@ -103,7 +103,7 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
       assunto: "",
     });
     startTransition(() => {
-      router.push("/");
+      router.push("/app"); // <-- Agora manda para o aplicativo
     });
   };
 

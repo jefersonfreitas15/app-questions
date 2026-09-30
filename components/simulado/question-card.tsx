@@ -1671,7 +1671,9 @@ export function BotaoNovaQuestao() {
             novasQuestoes = json.questoes;
           }
         }
-      } catch {}
+      } catch (e) {
+        console.log("Erro na API, usando gerador offline");
+      }
 
       if (!novasQuestoes) {
         novasQuestoes = gerarQuestoesIneditasPorDisciplina(
@@ -1681,10 +1683,20 @@ export function BotaoNovaQuestao() {
         );
       }
 
-      await gravarListaDeQuestoesNoBanco(novasQuestoes);
+      // Tenta salvar no Supabase. Se o celular bloquear a conexão (Load failed), 
+      // ele ignora e segue em frente sem explodir o erro na tela.
+      try {
+        await gravarListaDeQuestoesNoBanco(novasQuestoes);
+      } catch (dbError) {
+        console.warn("Falha de rede ao salvar no banco, mas as questões foram geradas.", dbError);
+      }
+
       setModalIaAberto(false);
       setAssuntoIa('');
-      window.location.href = `/?disciplina=${encodeURIComponent(disciplinaFinal)}`;
+      
+      // REDIRECIONA PARA A ROTA CORRETA DO APLICATIVO E NÃO PARA A PÁGINA DE VENDAS
+      window.location.href = `/app?disciplina=${encodeURIComponent(disciplinaFinal)}`;
+      
     } catch (err: any) {
       alert('Erro ao gerar questões com IA: ' + (err.message || 'Verifique a conexão.'));
     } finally {
