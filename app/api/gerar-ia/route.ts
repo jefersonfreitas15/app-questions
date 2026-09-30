@@ -99,7 +99,6 @@ export async function POST(req: Request) {
     const assunto = (body.assunto || "").trim();
     const quantidade = Math.min(Math.max(Number(body.quantidade) || 5, 1), 5);
 
-    // Se houver GEMINI_API_KEY no .env.local, gera com o modelo Gemini 2.5 Flash
     if (GEMINI_API_KEY) {
       const prompt = `Você é uma banca examinadora de concursos públicos de alto nível.
 Gere exatamente ${quantidade} questões inéditas de múltipla escolha (5 alternativas cada, apenas 1 correta) sobre a disciplina "${disciplina}"${
@@ -137,26 +136,38 @@ Retorne APENAS um JSON válido no formato de array abaixo, sem blocos markdown:
         }
       );
 
-      if (resp.ok) {
-        const data = await resp.json();
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        const parsed = JSON.parse(rawText);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return NextResponse.json({ questoes: parsed.slice(0, quantidade) });
-        }
+      // 1. Se o Google recusar a chave ou der erro, forçamos o sistema a mostrar o motivo
+      if (!resp.ok) {
+        const erroGoogle = await resp.text();
+        throw new Error(`Bloqueio do Google (Status ${resp.status}): ${erroGoogle}`);
+      }
+
+      const data = await resp.json();
+      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      
+      // 2. Limpamos qualquer formatação de código Markdown (```json) que o Gemini teime em enviar
+      const cleanText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+      
+      let parsed;
+      try {
+        parsed = JSON.parse(cleanText);
+      } catch (e) {
+        throw new Error("O Gemini devolveu um texto que não é JSON válido: " + cleanText);
+      }
+
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return NextResponse.json({ questoes: parsed.slice(0, quantidade) });
+      } else {
+        throw new Error("O Gemini devolveu uma lista vazia.");
       }
     }
 
-    // Caso não tenha GEMINI_API_KEY ou ocorra falha de rede, usa o gerador estruturado
-    const questoesFallback = gerarQuestoesEstruturadas(
-      disciplina,
-      assunto,
-      quantidade
-    );
-    return NextResponse.json({ questoes: questoesFallback });
+    // 3. Se a chave não existir na Vercel, o sistema vai avisar em vez de gerar repetidas
+    throw new Error("A chave GEMINI_API_KEY não está a ser reconhecida pelo servidor da Vercel.");
+    
   } catch (err: any) {
     return NextResponse.json(
-      { error: err?.message || "Erro ao gerar questões com IA" },
+      { error: err?.message || "Erro desconhecido na geração com IA" },
       { status: 500 }
     );
   }
