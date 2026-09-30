@@ -1683,13 +1683,21 @@ export function BotaoNovaQuestao() {
         );
       }
 
-      // Tenta salvar no Supabase e AVISA se der erro
+      // Tenta guardar no Supabase e avisa se der erro grave (ignorando duplicados)
       try {
         await gravarListaDeQuestoesNoBanco(novasQuestoes);
       } catch (dbError: any) {
-        alert("O Supabase bloqueou o salvamento: " + (dbError.message || "Erro desconhecido"));
-        setGerandoIa(false);
-        return; // Para tudo e não recarrega a página
+        const mensagemErro = dbError.message || "";
+        
+        // Se o erro for apenas de questão duplicada, ignoramos silenciosamente
+        if (mensagemErro.includes("duplicate key") || mensagemErro.includes("unique constraint")) {
+          console.warn("Aviso: Algumas questões geradas já existiam na base de dados.");
+        } else {
+          // Se for outro erro (ex: sem permissão), aí sim mostramos o alerta
+          alert("Erro ao guardar na base de dados: " + mensagemErro);
+          setGerandoIa(false);
+          return;
+        }
       }
 
       setModalIaAberto(false);
