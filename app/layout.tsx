@@ -4,7 +4,8 @@ import Script from 'next/script'
 import './globals.css'
 import { Geist } from "next/font/google"
 import { cn } from "@/lib/utils"
-import { FacebookPixel } from "@/components/pixel" // <-- Importação do componente do Pixel
+import { FacebookPixel } from "@/components/pixel"
+import { Suspense } from "react" // <-- ADICIONE ESTA LINHA AQUI
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
 
@@ -79,7 +80,9 @@ export default function RootLayout({
         {children}
         
         {/* Componente do Pixel carregado em todas as páginas */}
-        <FacebookPixel />
+        <Suspense fallback={null}>
+          <FacebookPixel />
+        </Suspense>
 
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
