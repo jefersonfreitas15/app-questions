@@ -13,6 +13,7 @@ const LINK_CHECKOUT_PAGAMENTO = "https://pay.kiwify.com.br/VE1GbyL";
 const LIMITE_QUESTOES_GRATIS = 5;
 
 // Códigos de ativação que liberam o Acesso Vitalício para o comprador:
+// (Usados como chaves-mestras para o Admin testar ou liberar acesso a amigos)
 const CODIGOS_ATIVACAO_VITALICIO = ["QPRO47", "VITALICIO", "QPRO2026", "APROVADO"];
 
 // ==========================================
@@ -1548,6 +1549,7 @@ export function BotaoNovaQuestao() {
   const [abaVitalicio, setAbaVitalicio] = useState<'oferta' | 'ativar'>('oferta');
   const [codigoAtivacao, setCodigoAtivacao] = useState('');
   const [erroAtivacao, setErroAtivacao] = useState('');
+  const [loadingAtivacao, setLoadingAtivacao] = useState(false); // Novo estado para loading
   const [resolvidasGratis, setResolvidasGratis] = useState(0);
 
   // Estados do Modal de Geração com IA
@@ -1609,9 +1611,12 @@ export function BotaoNovaQuestao() {
     };
   }, []);
 
-  const handleAtivarCodigoVitalicio = (e: React.FormEvent) => {
+  // FUNÇÃO ATUALIZADA: Validação via API do Supabase (Rota /api/validate-code)
+  const handleAtivarCodigoVitalicio = async (e: React.FormEvent) => {
     e.preventDefault();
     const limpo = codigoAtivacao.trim().toUpperCase();
+
+    // 1. Fallback de Admin (Códigos estáticos mestres)
     if (CODIGOS_ATIVACAO_VITALICIO.includes(limpo)) {
       localStorage.setItem('qpro_vitalicio_ativo', 'true');
       setVitalicioAtivo(true);
@@ -1619,8 +1624,37 @@ export function BotaoNovaQuestao() {
       setCodigoAtivacao('');
       setErroAtivacao('');
       alert('🎉 Parabéns! Seu Acesso Vitalício ao Qpro Concursos foi ativado com sucesso!');
-    } else {
-      setErroAtivacao('Código inválido. Verifique o código enviado na confirmação da sua compra.');
+      return;
+    }
+
+    // 2. Validação Real no Banco de Dados
+    setLoadingAtivacao(true);
+    setErroAtivacao('');
+
+    try {
+      const response = await fetch('/api/validate-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: limpo })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('qpro_vitalicio_ativo', 'true');
+        localStorage.setItem('qpro_user_email', data.email); // Guarda o email associado à compra
+        setVitalicioAtivo(true);
+        setModalVitalicioAberto(false);
+        setCodigoAtivacao('');
+        alert('🎉 Parabéns! Seu Acesso Vitalício ao Qpro Concursos foi ativado com sucesso!');
+      } else {
+        // Exibe o erro devolvido pela nossa API (ex: "Código já utilizado")
+        setErroAtivacao(data.error || 'Código inválido. Verifique o código enviado na confirmação da sua compra.');
+      }
+    } catch (err) {
+      setErroAtivacao('Erro de conexão com o servidor. Verifique a sua internet e tente novamente.');
+    } finally {
+      setLoadingAtivacao(false);
     }
   };
 
@@ -1937,15 +1971,16 @@ export function BotaoNovaQuestao() {
                     type="button"
                     onClick={() => setAbaVitalicio('oferta')}
                     style={{ backgroundColor: '#F8FAFC', color: '#475569' }}
-                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold"
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold hover:opacity-80"
                   >
                     ← Voltar para Oferta
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-sm"
+                    disabled={loadingAtivacao}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    ✓ Desbloquear Acesso Vitalício
+                    {loadingAtivacao ? 'A validar...' : '✓ Desbloquear Acesso Vitalício'}
                   </button>
                 </div>
               </form>
