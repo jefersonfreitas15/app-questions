@@ -1,13 +1,46 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, Copy, Check, ArrowRight, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { CheckCircle2, Copy, Check, ArrowRight, Sparkles, Loader2 } from "lucide-react";
 
 export default function PaginaObrigado() {
+  const searchParams = useSearchParams();
+  const emailParam = searchParams.get("email") || searchParams.get("customer_email");
+
   const [copiado, setCopiado] = useState(false);
-  const codigoAtivacao = "QPRO47";
+  const [codigoAtivacao, setCodigoAtivacao] = useState("CARREGANDO...");
+  const [carregando, setCarregando] = useState(true);
+
+  useEffect(() => {
+    async function buscarCodigo() {
+      try {
+        // Se houver e-mail no URL, procura pelo código desse e-mail, senão traz o mais recente
+        const endpoint = emailParam 
+          ? `/api/get-code?email=${encodeURIComponent(emailParam)}`
+          : `/api/get-code`;
+
+        const res = await fetch(endpoint);
+        const data = await res.json();
+
+        if (data && data.code) {
+          setCodigoAtivacao(data.code);
+        } else {
+          setCodigoAtivacao("QPRO-VITALICIO");
+        }
+      } catch (err) {
+        console.error("Erro ao buscar código:", err);
+        setCodigoAtivacao("QPRO-VITALICIO");
+      } finally {
+        setCarregando(false);
+      }
+    }
+
+    buscarCodigo();
+  }, [emailParam]);
 
   const handleCopiarCodigo = () => {
+    if (carregando || codigoAtivacao.includes("CARREGANDO")) return;
     navigator.clipboard.writeText(codigoAtivacao);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 3000);
@@ -40,7 +73,6 @@ export default function PaginaObrigado() {
 
           {/* Passo a Passo */}
           <div className="space-y-6 relative">
-            {/* Linha conectora invisível no mobile, visível no desktop */}
             <div className="hidden sm:block absolute left-4 top-4 bottom-4 w-0.5 bg-slate-100" />
 
             {/* Passo 1 */}
@@ -62,26 +94,36 @@ export default function PaginaObrigado() {
                   className="flex items-center justify-between bg-slate-50 border-2 border-dashed border-slate-300 rounded-xl p-3 cursor-pointer hover:bg-indigo-50 hover:border-indigo-300 transition-all group"
                   title="Clique para copiar"
                 >
-                  <span className="text-xl sm:text-2xl font-black text-indigo-600 tracking-widest pl-2">
-                    {codigoAtivacao}
-                  </span>
-                  <button 
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                      copiado 
-                        ? "bg-emerald-100 text-emerald-700" 
-                        : "bg-white border border-slate-200 text-slate-600 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600"
-                    }`}
-                  >
-                    {copiado ? (
+                  <span className="text-xl sm:text-2xl font-black text-indigo-600 tracking-widest pl-2 flex items-center gap-2">
+                    {carregando ? (
                       <>
-                        <Check className="w-4 h-4" /> Copiado!
+                        <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+                        <span className="text-sm font-normal text-slate-400">Buscando código...</span>
                       </>
                     ) : (
-                      <>
-                        <Copy className="w-4 h-4" /> Copiar
-                      </>
+                      codigoAtivacao
                     )}
-                  </button>
+                  </span>
+                  
+                  {!carregando && (
+                    <button 
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                        copiado 
+                          ? "bg-emerald-100 text-emerald-700" 
+                          : "bg-white border border-slate-200 text-slate-600 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600"
+                      }`}
+                    >
+                      {copiado ? (
+                        <>
+                          <Check className="w-4 h-4" /> Copiado!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" /> Copiar
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -96,16 +138,16 @@ export default function PaginaObrigado() {
                   Abra o aplicativo e ative seu código
                 </p>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Clique no botão azul abaixo para abrir a plataforma. Lá dentro, clique no botão <strong>"👑 Liberar Vitalício"</strong> (ou em qualquer botão de <strong>Gerar com IA</strong>), escolha a aba <strong>"🔑 Já comprei! Ativar"</strong> e cole o seu código.
+                  Clique no botão azul abaixo para abrir a plataforma. Lá dentro, clique no botão <strong>"👑 Liberar Vitalício"</strong>, escolha a aba <strong>"🔑 Já comprei! Ativar"</strong> e cole o seu código.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Botão de Ação (Redirecionamento) */}
+          {/* Botão de Ação */}
           <div className="mt-10">
             <a 
-              href="/" // Se você mover o app para "/app", mude este href para "/app"
+              href="/"
               className="flex items-center justify-center gap-2 w-full bg-indigo-600 hover:bg-indigo-500 text-white p-4 rounded-2xl font-extrabold text-sm sm:text-base shadow-lg shadow-indigo-200 transition-all active:scale-[0.98] group"
             >
               Abrir Aplicativo e Ativar Agora
