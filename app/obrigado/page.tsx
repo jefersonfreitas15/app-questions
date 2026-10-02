@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Copy, Check, ArrowRight, Sparkles, Loader2 } from "lucide-react";
 
-export default function PaginaObrigado() {
+function ConteudoObrigado() {
   const searchParams = useSearchParams();
   const emailParam = searchParams.get("email") || searchParams.get("customer_email");
 
@@ -15,7 +15,6 @@ export default function PaginaObrigado() {
   useEffect(() => {
     async function buscarCodigo() {
       try {
-        // Se houver e-mail no URL, procura pelo código desse e-mail, senão traz o mais recente
         const endpoint = emailParam 
           ? `/api/get-code?email=${encodeURIComponent(emailParam)}`
           : `/api/get-code`;
@@ -164,5 +163,20 @@ export default function PaginaObrigado() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaginaObrigado() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-svh bg-slate-50 flex items-center justify-center">
+        <div className="flex items-center gap-3 text-slate-500 font-medium">
+          <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+          A carregar página de obrigado...
+        </div>
+      </div>
+    }>
+      <ConteudoObrigado />
+    </Suspense>
   );
 }
