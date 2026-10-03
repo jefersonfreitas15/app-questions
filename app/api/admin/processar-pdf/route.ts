@@ -7,7 +7,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY as string
 );
 
-// Voltamos a puxar a chave segura da Vercel (sem expor no código)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 
 export async function POST(request: Request) {
@@ -26,9 +25,8 @@ export async function POST(request: Request) {
     const provaBase64 = provaBuffer.toString('base64');
     const gabaritoBase64 = gabaritoBuffer.toString('base64');
 
-    // Atualizado para o modelo exigido pela Google
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-3.8-flash", // <-- Mude apenas o número da versão aqui!
+      model: "gemini-3.8-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -63,7 +61,11 @@ export async function POST(request: Request) {
       { inlineData: { data: gabaritoBase64, mimeType: "application/pdf" } }
     ]);
 
-    const respostaTexto = result.response.text();
+    let respostaTexto = result.response.text();
+    
+    // LIMPEZA CRÍTICA: Remove a formatação markdown que a IA pode inserir
+    respostaTexto = respostaTexto.replace(/```json/g, '').replace(/```/g, '').trim();
+
     const questoesJSON = JSON.parse(respostaTexto);
 
     let inseridas = 0;

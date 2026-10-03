@@ -100,10 +100,17 @@ export async function POST(req: Request) {
     const quantidade = Math.min(Math.max(Number(body.quantidade) || 5, 1), 5);
 
     if (GEMINI_API_KEY) {
-      const prompt = `Você é uma banca examinadora de concursos públicos de alto nível.
-Gere exatamente ${quantidade} questões inéditas de múltipla escolha (5 alternativas cada, apenas 1 correta) sobre a disciplina "${disciplina}"${
-        assunto ? ` e o assunto específico "${assunto}"` : ""
+      // PROMPT ATUALIZADO: Mais rigoroso e exigindo originalidade
+      const prompt = `Você é um examinador sênior de concursos públicos (bancas FGV, Cebraspe, FCC).
+Gere exatamente ${quantidade} questão(ões) INÉDITA(S) e de alto nível sobre a disciplina "${disciplina}"${
+        assunto ? `, focada especificamente no tema "${assunto}"` : ""
       }.
+
+REGRAS OBRIGATÓRIAS:
+- NUNCA repita questões genéricas. Crie um cenário hipotético, um estudo de caso prático ou uma situação-problema complexa.
+- Fuja de perguntas do tipo "O que é...". Exija interpretação da lei, da doutrina ou da jurisprudência aplicável.
+- Cada questão deve ter 5 alternativas (A a E), sendo APENAS UMA correta.
+
 Retorne APENAS um JSON válido no formato de array abaixo, sem blocos markdown:
 [
   {
@@ -112,8 +119,8 @@ Retorne APENAS um JSON válido no formato de array abaixo, sem blocos markdown:
     "ano": 2026,
     "disciplina": "${disciplina}",
     "assunto": "${assunto || "Conteúdo Programático Geral"}",
-    "enunciado": "Texto completo e técnico do enunciado...",
-    "explicacao": "Fundamentação detalhada do professor explicando o gabarito...",
+    "enunciado": "Texto da questão contextualizada...",
+    "explicacao": "Fundamentação detalhada explicando por que a alternativa correta está certa e por que as outras estão erradas...",
     "alternativas": [
       { "texto": "Texto da alternativa A", "is_correta": false },
       { "texto": "Texto da alternativa B", "is_correta": true },
@@ -131,7 +138,10 @@ Retorne APENAS um JSON válido no formato de array abaixo, sem blocos markdown:
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json" },
+            generationConfig: { 
+              responseMimeType: "application/json",
+              temperature: 0.9 // <-- ADICIONADO: O segredo para forçar a criatividade da IA
+            },
           }),
         }
       );
