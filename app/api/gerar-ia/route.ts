@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
-// Impede o Next.js de guardar a resposta em cache
+// 1. Desativação total do cache na rota
 export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 
@@ -14,57 +15,57 @@ export async function POST(req: Request) {
 
     const assuntoFormatado = assunto ? assunto : "Assuntos gerais da disciplina";
 
-    // Fator aleatório para garantir que a IA não recupera sempre a mesma prova
-    const fatorAleatorio = Math.random().toString(36).substring(2, 10) + Date.now();
+    // 2. Sorteio automático de banca para forçar a IA a mudar o estilo da pergunta
+    const bancas = ["FGV (Foco em casos práticos e historinhas)", "FCC (Foco em letra da lei e pequenas pegadinhas)", "Cebraspe (Foco em doutrina e jurisprudência)", "Vunesp (Foco em situações do quotidiano administrativo)"];
+    const bancaSorteada = bancas[Math.floor(Math.random() * bancas.length)];
+    
+    // Fator de entropia (aleatoriedade extrema)
+    const fatorAleatorio = Math.random().toString(36).substring(2, 15) + Date.now();
 
     if (GEMINI_API_KEY) {
-      const prompt = `Você é um banco de dados avançado contendo o histórico de todas as provas de concursos públicos do Brasil.
-[ID da Geração: ${fatorAleatorio}] - OBRIGATÓRIO: Varie completamente a estrutura desta geração em relação a qualquer outra.
+      const prompt = `Você é um banco de dados de concursos.
+ID Único de Geração: ${fatorAleatorio}
 
-Sua missão é resgatar, recriar ou simular com extrema fidelidade ${quantidade} questão(ões) sobre a disciplina "${disciplina}", focada no tema "${assuntoFormatado}".
+Sua tarefa: Gerar ${quantidade} questão(ões) INÉDITA(S) sobre a disciplina "${disciplina}", tema "${assuntoFormatado}".
 
-DIRETRIZES DE MODELAGEM DAS BANCAS (VARIE O ESTILO):
-Você DEVE utilizar um dos 3 modelos clássicos de provas reais brasileiras:
-1. MODELO FGV: Crie um texto longo contando uma história prática (ex: "João, servidor público municipal, no exercício de suas funções..."). A resposta exige a aplicação do caso concreto à lei.
-2. MODELO FCC: Vá direto à cobrança da "letra da lei" (lei seca). Faça um enunciado direto (ex: "Nos termos da Lei X, é correto afirmar que...") e coloque alternativas com pequenas pegadinhas de prazos ou competências.
-3. MODELO CEBRASPE (Múltipla Escolha): Foco em decisões do STF/STJ e doutrina profunda. Enunciado acadêmico e direto.
-
-REGRAS:
-- É totalmente permitido recriar questões reais que já caíram em provas passadas.
-- NUNCA use o mesmo modelo estrutural da questão anterior. Se acabou de usar o modelo FGV, use o modelo FCC ou Cebraspe na próxima.
-- Abandone completamente qualquer introdução genérica. Aja como uma prova real.
-- Cada questão deve ter 5 alternativas (A a E), sendo APENAS UMA correta.
+INSTRUÇÕES DE QUEBRA DE PADRÃO (MUITO IMPORTANTE):
+1. Estilo OBRIGATÓRIO desta requisição: ${bancaSorteada}. Adeque o texto perfeitamente a este estilo.
+2. Aborde uma nuance, exceção à regra ou caso prático MUITO ESPECÍFICO do tema. Fuja dos conceitos básicos que todo mundo conhece.
+3. Se usar um caso prático, invente nomes de personagens, cidades ou situações completamente novos.
+4. NUNCA repita a mesma estrutura ou os mesmos exemplos de gerações anteriores.
 
 Retorne APENAS um JSON válido no formato de array abaixo, sem blocos markdown:
 [
   {
-    "banca": "Simulação FGV/FCC/Cebraspe",
-    "orgao": "Prova Replicada",
+    "banca": "Simulação ${bancaSorteada.split(" ")[0]}",
+    "orgao": "Qpro Inéditas",
     "ano": 2026,
     "disciplina": "${disciplina}",
     "assunto": "${assuntoFormatado}",
-    "enunciado": "Texto da questão no exato modelo da banca escolhida...",
-    "explicacao": "Gabarito comentado detalhadamente, citando o artigo da lei ou a súmula correspondente...",
+    "enunciado": "Texto da questão...",
+    "explicacao": "Gabarito comentado...",
     "alternativas": [
-      { "texto": "Texto da alternativa A", "is_correta": false },
-      { "texto": "Texto da alternativa B", "is_correta": true },
-      { "texto": "Texto da alternativa C", "is_correta": false },
-      { "texto": "Texto da alternativa D", "is_correta": false },
-      { "texto": "Texto da alternativa E", "is_correta": false }
+      { "texto": "Alternativa A", "is_correta": false },
+      { "texto": "Alternativa B", "is_correta": true },
+      { "texto": "Alternativa C", "is_correta": false },
+      { "texto": "Alternativa D", "is_correta": false },
+      { "texto": "Alternativa E", "is_correta": false }
     ]
   }
 ]`;
 
+      // 3. Corrigido para gemini-1.5-flash e adicionado "cache: 'no-store'" no fetch
       const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          cache: "no-store", // <-- A MARTELADA FINAL NO CACHE DO NEXT.JS
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { 
               responseMimeType: "application/json",
-              temperature: 0.85 // Ajustado para equilibrar originalidade estrutural com precisão técnica
+              temperature: 0.95
             },
           }),
         }
