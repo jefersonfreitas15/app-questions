@@ -7,7 +7,8 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY as string
 );
 
-// Inicializa o Gemini com a chave da Vercel
+// COLE A SUA CHAVE NOVA ENTRE AS ASPAS ABAIXO (Apenas para este teste!)
+// Exemplo: const genAI = new GoogleGenerativeAI("AIzaSyB_1234567890abcdef...");
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 
 export async function POST(request: Request) {
@@ -19,25 +20,24 @@ export async function POST(request: Request) {
     if (!provaFile || !gabaritoFile) {
       return NextResponse.json({ error: 'Faltam ficheiros (prova ou gabarito).' }, { status: 400 });
     }
-
-    // Lê os ficheiros PDF e converte diretamente para Base64 (Formato que o Gemini lê nativamente)
+    
     const provaBuffer = Buffer.from(await provaFile.arrayBuffer());
     const gabaritoBuffer = Buffer.from(await gabaritoFile.arrayBuffer());
     
     const provaBase64 = provaBuffer.toString('base64');
     const gabaritoBase64 = gabaritoBuffer.toString('base64');
 
-    // Configura o Gemini para forçar uma resposta em JSON perfeito
+    // Usamos o FLASH porque é o único rápido o suficiente para a Vercel Gratuita não cancelar
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-pro", // Deixe exatamente assim
+      model: "gemini-1.5-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
 
     const prompt = `
       Você é um especialista em extração de dados de concursos públicos brasileiros.
-      Em anexo, envio-lhe dois arquivos PDF nativos: o primeiro é o Caderno de Prova e o segundo é o Gabarito Oficial.
+      Em anexo, envio-lhe dois arquivos PDF nativos: o Caderno de Prova e o Gabarito Oficial.
       
-      Sua tarefa:
+      Sua tarefa (Seja rápido e preciso):
       1. Leia as questões da Prova e as suas alternativas.
       2. Cruze com as respostas do Gabarito para descobrir qual é a alternativa correta.
       3. Extraia e devolva ESTRITAMENTE um array JSON com as questões formatadas.
@@ -45,9 +45,9 @@ export async function POST(request: Request) {
       Formato EXATO obrigatório do JSON:
       [
         {
-          "enunciado": "Texto completo da pergunta da prova",
-          "banca": "Nome da Banca Organizadora (se achar, senão 'Desconhecida')",
-          "orgao": "Órgão do concurso (ex: Polícia Civil, Tribunal de Contas)",
+          "enunciado": "Texto completo da pergunta",
+          "banca": "Nome da Banca (ex: FGV, Cebraspe, FCC)",
+          "orgao": "Órgão do concurso",
           "ano": 2024,
           "disciplina": "Tente adivinhar a disciplina (ex: Português, Direito Administrativo)",
           "alternativas": [
@@ -58,7 +58,6 @@ export async function POST(request: Request) {
       ]
     `;
 
-    // Envia o prompt de texto + os 2 PDFs anexados diretamente para a "cabeça" da IA
     const result = await model.generateContent([
       prompt,
       { inlineData: { data: provaBase64, mimeType: "application/pdf" } },
@@ -66,19 +65,10 @@ export async function POST(request: Request) {
     ]);
 
     const respostaTexto = result.response.text();
-    
-    // Tenta interpretar o JSON retornado pelo Gemini
-    let questoesJSON;
-    try {
-      questoesJSON = JSON.parse(respostaTexto);
-    } catch (parseError) {
-      console.error("Gemini não retornou um JSON válido:", respostaTexto);
-      return NextResponse.json({ error: 'O Gemini falhou a formatar as questões em JSON.' }, { status: 500 });
-    }
+    const questoesJSON = JSON.parse(respostaTexto);
 
     let inseridas = 0;
 
-    // Grava no Supabase (Tabelas 'questoes' e 'alternativas')
     for (const q of questoesJSON) {
       const { data: questaoData, error: qError } = await supabase
         .from('questoes')
@@ -92,12 +82,8 @@ export async function POST(request: Request) {
         .select('id')
         .single();
 
-      if (qError) {
-        console.error("Erro ao inserir questão:", qError);
-        continue;
-      }
+      if (qError) continue;
 
-      // Adiciona o ID da questão a cada alternativa e grava
       const altsParaInserir = q.alternativas.map((a: any) => ({
         questao_id: questaoData.id,
         texto: a.texto,
