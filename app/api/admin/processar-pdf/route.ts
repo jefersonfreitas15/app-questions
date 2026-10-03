@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Aumenta o tempo da Vercel para ler PDFs grandes
 export const maxDuration = 60; 
 
 const supabase = createClient(
@@ -28,9 +27,8 @@ export async function POST(request: Request) {
     const provaBase64 = provaBuffer.toString('base64');
     const gabaritoBase64 = gabaritoBuffer.toString('base64');
 
-    // MODELO CORRIGIDO AQUI PARA O SDK DO GOOGLE
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash-latest",
+      model: "gemini-1.5-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
 
