@@ -26,9 +26,9 @@ export async function POST(request: Request) {
     const provaBase64 = provaBuffer.toString('base64');
     const gabaritoBase64 = gabaritoBuffer.toString('base64');
 
-    // A SOLUÇÃO ESTÁ AQUI: Atualizamos para o "gemini-2.5-flash", a versão ativa da Google!
+    // Atualizado para o modelo exigido pela Google
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
+      model: "gemini-3.8-flash", // <-- Mude apenas o número da versão aqui!
       generationConfig: { responseMimeType: "application/json" }
     });
 
