@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+// 1. FORÇA O NEXT.JS A NUNCA GUARDAR EM CACHE (Garante execução limpa a cada clique)
+export const dynamic = 'force-dynamic';
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 
 export async function POST(req: Request) {
@@ -9,17 +12,21 @@ export async function POST(req: Request) {
     const assunto = (body.assunto || "").trim();
     const quantidade = Math.min(Math.max(Number(body.quantidade) || 5, 1), 5);
 
-    // Se não houver assunto específico, removemos qualquer termo genérico que confunda a IA
     const assuntoFormatado = assunto ? assunto : "Assuntos gerais da disciplina";
+
+    // 2. Fator de aleatoriedade forte para forçar a IA a criar textos diferentes
+    const fatorAleatorio = Math.random().toString(36).substring(2, 10) + Date.now();
 
     if (GEMINI_API_KEY) {
       const prompt = `Você é um examinador sênior de concursos públicos (bancas FGV, Cebraspe, FCC).
+[ID da Geração Interna: ${fatorAleatorio}] - OBRIGATÓRIO: Crie uma questão completamente diferente de qualquer outra que você já tenha criado.
+
 Gere exatamente ${quantidade} questão(ões) INÉDITA(S) e de alto nível sobre a disciplina "${disciplina}", focada estritamente no tema: "${assuntoFormatado}".
 
 REGRAS OBRIGATÓRIAS:
 - Vá direto ao ponto! NUNCA inicie a questão com frases genéricas como "Acerca do conteúdo programático", "Sobre a jurisprudência", ou "No que tange aos conceitos fundamentais". 
 - O enunciado deve mergulhar diretamente no tema (ex: "Acerca da anulação de atos administrativos...", "Determinado servidor público cometeu...").
-- Crie um cenário prático ou um caso hipotético desafiador, exigindo interpretação da lei.
+- Crie um cenário prático ou um caso hipotético desafiador e DIFERENTE DO HABITUAL, exigindo interpretação da lei.
 - Cada questão deve ter 5 alternativas (A a E), sendo APENAS UMA correta.
 
 Retorne APENAS um JSON válido no formato de array abaixo, sem blocos markdown:
@@ -51,7 +58,7 @@ Retorne APENAS um JSON válido no formato de array abaixo, sem blocos markdown:
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { 
               responseMimeType: "application/json",
-              temperature: 0.9 // Mantemos alto para garantir questões 100% originais
+              temperature: 1.0 // 3. Aumentado para 1.0 para máxima criatividade e zero repetição
             },
           }),
         }
