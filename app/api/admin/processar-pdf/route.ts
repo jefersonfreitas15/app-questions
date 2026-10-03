@@ -7,8 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY as string
 );
 
-// COLE A SUA CHAVE NOVA ENTRE AS ASPAS ABAIXO (Apenas para este teste!)
-// Exemplo: const genAI = new GoogleGenerativeAI("AIzaSyB_1234567890abcdef...");
+// Voltamos a puxar a chave segura da Vercel (sem expor no código)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 
 export async function POST(request: Request) {
@@ -20,16 +19,16 @@ export async function POST(request: Request) {
     if (!provaFile || !gabaritoFile) {
       return NextResponse.json({ error: 'Faltam ficheiros (prova ou gabarito).' }, { status: 400 });
     }
-    
+
     const provaBuffer = Buffer.from(await provaFile.arrayBuffer());
     const gabaritoBuffer = Buffer.from(await gabaritoFile.arrayBuffer());
     
     const provaBase64 = provaBuffer.toString('base64');
     const gabaritoBase64 = gabaritoBuffer.toString('base64');
 
-    // Usamos o FLASH porque é o único rápido o suficiente para a Vercel Gratuita não cancelar
+    // A SOLUÇÃO ESTÁ AQUI: Atualizamos para o "gemini-2.5-flash", a versão ativa da Google!
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -48,7 +47,7 @@ export async function POST(request: Request) {
           "enunciado": "Texto completo da pergunta",
           "banca": "Nome da Banca (ex: FGV, Cebraspe, FCC)",
           "orgao": "Órgão do concurso",
-          "ano": 2024,
+          "ano": 2026,
           "disciplina": "Tente adivinhar a disciplina (ex: Português, Direito Administrativo)",
           "alternativas": [
             { "texto": "Texto da alternativa A", "letra": "A", "is_correct": false },
