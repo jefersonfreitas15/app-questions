@@ -43,22 +43,43 @@ Retorne APENAS um array JSON:
   }
 ]`;
 
-      const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json", temperature: 0.95 },
-          }),
+      let resp;
+      let maxTentativas = 3;
+      let tempoEspera = 2000; // Começa a esperar 2 segundos
+
+      // Loop de tentativa automática (Retry Mechanism)
+      for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
+        resp = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            cache: "no-store",
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { responseMimeType: "application/json", temperature: 0.95 },
+            }),
+          }
+        );
+
+        // Se o Google estiver sobrecarregado (503), espera e tenta de novo
+        if (resp.status === 503) {
+          if (tentativa === maxTentativas) {
+            throw new Error(`Google Gemini sobrecarregado após ${maxTentativas} tentativas. Tente novamente em alguns minutos.`);
+          }
+          await new Promise(resolve => setTimeout(resolve, tempoEspera));
+          tempoEspera *= 2; // Dobra o tempo de espera (2s, depois 4s)
+          continue;
         }
-      );
 
-      if (!resp.ok) throw new Error(await resp.text());
+        // Se der outro erro (ex: chave inválida), aborta imediatamente
+        if (!resp.ok) throw new Error(await resp.text());
+        
+        // Se a resposta for OK, sai do loop
+        break; 
+      }
 
-      const data = await resp.json();
+      const data = await resp?.json();
       const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
       const cleanText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
       
