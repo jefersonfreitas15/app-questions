@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-// 1. FORÇA O NEXT.JS A NUNCA GUARDAR EM CACHE (Garante execução limpa a cada clique)
+// Impede o Next.js de guardar a resposta em cache
 export const dynamic = 'force-dynamic';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
@@ -14,31 +14,37 @@ export async function POST(req: Request) {
 
     const assuntoFormatado = assunto ? assunto : "Assuntos gerais da disciplina";
 
-    // 2. Fator de aleatoriedade forte para forçar a IA a criar textos diferentes
+    // Fator aleatório para garantir que a IA não recupera sempre a mesma prova
     const fatorAleatorio = Math.random().toString(36).substring(2, 10) + Date.now();
 
     if (GEMINI_API_KEY) {
-      const prompt = `Você é um examinador sênior de concursos públicos (bancas FGV, Cebraspe, FCC).
-[ID da Geração Interna: ${fatorAleatorio}] - OBRIGATÓRIO: Crie uma questão completamente diferente de qualquer outra que você já tenha criado.
+      const prompt = `Você é um banco de dados avançado contendo o histórico de todas as provas de concursos públicos do Brasil.
+[ID da Geração: ${fatorAleatorio}] - OBRIGATÓRIO: Varie completamente a estrutura desta geração em relação a qualquer outra.
 
-Gere exatamente ${quantidade} questão(ões) INÉDITA(S) e de alto nível sobre a disciplina "${disciplina}", focada estritamente no tema: "${assuntoFormatado}".
+Sua missão é resgatar, recriar ou simular com extrema fidelidade ${quantidade} questão(ões) sobre a disciplina "${disciplina}", focada no tema "${assuntoFormatado}".
 
-REGRAS OBRIGATÓRIAS:
-- Vá direto ao ponto! NUNCA inicie a questão com frases genéricas como "Acerca do conteúdo programático", "Sobre a jurisprudência", ou "No que tange aos conceitos fundamentais". 
-- O enunciado deve mergulhar diretamente no tema (ex: "Acerca da anulação de atos administrativos...", "Determinado servidor público cometeu...").
-- Crie um cenário prático ou um caso hipotético desafiador e DIFERENTE DO HABITUAL, exigindo interpretação da lei.
+DIRETRIZES DE MODELAGEM DAS BANCAS (VARIE O ESTILO):
+Você DEVE utilizar um dos 3 modelos clássicos de provas reais brasileiras:
+1. MODELO FGV: Crie um texto longo contando uma história prática (ex: "João, servidor público municipal, no exercício de suas funções..."). A resposta exige a aplicação do caso concreto à lei.
+2. MODELO FCC: Vá direto à cobrança da "letra da lei" (lei seca). Faça um enunciado direto (ex: "Nos termos da Lei X, é correto afirmar que...") e coloque alternativas com pequenas pegadinhas de prazos ou competências.
+3. MODELO CEBRASPE (Múltipla Escolha): Foco em decisões do STF/STJ e doutrina profunda. Enunciado acadêmico e direto.
+
+REGRAS:
+- É totalmente permitido recriar questões reais que já caíram em provas passadas.
+- NUNCA use o mesmo modelo estrutural da questão anterior. Se acabou de usar o modelo FGV, use o modelo FCC ou Cebraspe na próxima.
+- Abandone completamente qualquer introdução genérica. Aja como uma prova real.
 - Cada questão deve ter 5 alternativas (A a E), sendo APENAS UMA correta.
 
 Retorne APENAS um JSON válido no formato de array abaixo, sem blocos markdown:
 [
   {
-    "banca": "Qpro IA",
-    "orgao": "Simulado Inteligente",
+    "banca": "Simulação FGV/FCC/Cebraspe",
+    "orgao": "Prova Replicada",
     "ano": 2026,
     "disciplina": "${disciplina}",
     "assunto": "${assuntoFormatado}",
-    "enunciado": "Texto da questão contextualizada, indo direto ao tema sem introduções genéricas...",
-    "explicacao": "Fundamentação detalhada explicando por que a alternativa correta está certa e por que as outras estão erradas...",
+    "enunciado": "Texto da questão no exato modelo da banca escolhida...",
+    "explicacao": "Gabarito comentado detalhadamente, citando o artigo da lei ou a súmula correspondente...",
     "alternativas": [
       { "texto": "Texto da alternativa A", "is_correta": false },
       { "texto": "Texto da alternativa B", "is_correta": true },
@@ -58,7 +64,7 @@ Retorne APENAS um JSON válido no formato de array abaixo, sem blocos markdown:
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: { 
               responseMimeType: "application/json",
-              temperature: 1.0 // 3. Aumentado para 1.0 para máxima criatividade e zero repetição
+              temperature: 0.85 // Ajustado para equilibrar originalidade estrutural com precisão técnica
             },
           }),
         }
