@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// 1. O require('pdf-parse') NÃO PODE ficar aqui no topo!
-
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
   process.env.SUPABASE_SERVICE_ROLE_KEY as string
@@ -14,9 +12,6 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 
 export async function POST(request: Request) {
   try {
-    // 2. Coloque a importação AQUI DENTRO da função:
-    const pdfParse = require('pdf-parse');
-
     const formData = await request.formData();
     const provaFile = formData.get('prova') as File;
     const gabaritoFile = formData.get('gabarito') as File;
@@ -25,12 +20,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Faltam ficheiros (prova ou gabarito).' }, { status: 400 });
     }
 
-    // Lê os ficheiros PDF para texto
+    // Lê os ficheiros PDF e converte diretamente para Base64 (Formato que o Gemini lê nativamente)
     const provaBuffer = Buffer.from(await provaFile.arrayBuffer());
     const gabaritoBuffer = Buffer.from(await gabaritoFile.arrayBuffer());
     
-    const provaData = await pdfParse(provaBuffer);
-    const gabaritoData = await pdfParse(gabaritoBuffer);
+    const provaBase64 = provaBuffer.toString('base64');
+    const gabaritoBase64 = gabaritoBuffer.toString('base64');
 
     // Configura o Gemini para forçar uma resposta em JSON perfeito
     const model = genAI.getGenerativeModel({ 
@@ -40,10 +35,10 @@ export async function POST(request: Request) {
 
     const prompt = `
       Você é um especialista em extração de dados de concursos públicos brasileiros.
-      Abaixo, forneço o texto extraído de um Caderno de Prova (PDF) e o texto do Gabarito.
+      Em anexo, envio-lhe dois arquivos PDF nativos: o primeiro é o Caderno de Prova e o segundo é o Gabarito Oficial.
       
       Sua tarefa:
-      1. Leia as questões da Prova e suas alternativas.
+      1. Leia as questões da Prova e as suas alternativas.
       2. Cruze com as respostas do Gabarito para descobrir qual é a alternativa correta.
       3. Extraia e devolva ESTRITAMENTE um array JSON com as questões formatadas.
       
@@ -54,23 +49,32 @@ export async function POST(request: Request) {
           "banca": "Nome da Banca Organizadora (se achar, senão 'Desconhecida')",
           "orgao": "Órgão do concurso (ex: Polícia Civil, Tribunal de Contas)",
           "ano": 2024,
+          "disciplina": "Tente adivinhar a disciplina (ex: Português, Direito Administrativo)",
           "alternativas": [
             { "texto": "Texto da alternativa A", "letra": "A", "is_correct": false },
             { "texto": "Texto da alternativa B", "letra": "B", "is_correct": true }
           ]
         }
       ]
-
-      --- TEXTO DA PROVA ---
-      ${provaData.text.substring(0, 50000)}
-
-      --- TEXTO DO GABARITO ---
-      ${gabaritoData.text.substring(0, 10000)}
     `;
 
-    // Processa com o Gemini
-    const result = await model.generateContent(prompt);
-    const questoesJSON = JSON.parse(result.response.text());
+    // Envia o prompt de texto + os 2 PDFs anexados diretamente para a "cabeça" da IA
+    const result = await model.generateContent([
+      prompt,
+      { inlineData: { data: provaBase64, mimeType: "application/pdf" } },
+      { inlineData: { data: gabaritoBase64, mimeType: "application/pdf" } }
+    ]);
+
+    const respostaTexto = result.response.text();
+    
+    // Tenta interpretar o JSON retornado pelo Gemini
+    let questoesJSON;
+    try {
+      questoesJSON = JSON.parse(respostaTexto);
+    } catch (parseError) {
+      console.error("Gemini não retornou um JSON válido:", respostaTexto);
+      return NextResponse.json({ error: 'O Gemini falhou a formatar as questões em JSON.' }, { status: 500 });
+    }
 
     let inseridas = 0;
 
@@ -82,7 +86,8 @@ export async function POST(request: Request) {
           enunciado: q.enunciado, 
           banca: q.banca, 
           orgao: q.orgao, 
-          ano: q.ano 
+          ano: q.ano,
+          disciplina: q.disciplina || 'Geral'
         }])
         .select('id')
         .single();
@@ -97,7 +102,7 @@ export async function POST(request: Request) {
         questao_id: questaoData.id,
         texto: a.texto,
         letra: a.letra,
-        is_correta: a.is_correct // Ajustado para is_correta que é o nome que o seu banco costuma usar
+        is_correta: a.is_correct || a.is_correta
       }));
 
       const { error: aError } = await supabase
