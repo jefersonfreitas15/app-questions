@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
-// 1. Desativação total do cache na rota
+// 1. Configurações para evitar Cache e Aumentar o Tempo limite da Vercel
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
+export const maxDuration = 60; // <-- A MÁGICA: Dá até 60 segundos para a IA pensar sem cortar!
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 
@@ -14,93 +15,71 @@ export async function POST(req: Request) {
     const quantidade = Math.min(Math.max(Number(body.quantidade) || 5, 1), 5);
 
     const assuntoFormatado = assunto ? assunto : "Assuntos gerais da disciplina";
-
-    // 2. Sorteio automático de banca para forçar a IA a mudar o estilo da pergunta
-    const bancas = ["FGV (Foco em casos práticos e historinhas)", "FCC (Foco em letra da lei e pequenas pegadinhas)", "Cebraspe (Foco em doutrina e jurisprudência)", "Vunesp (Foco em situações do quotidiano administrativo)"];
+    const bancas = ["FGV", "FCC", "Cebraspe", "Vunesp"];
     const bancaSorteada = bancas[Math.floor(Math.random() * bancas.length)];
-    
-    // Fator de entropia (aleatoriedade extrema)
     const fatorAleatorio = Math.random().toString(36).substring(2, 15) + Date.now();
 
     if (GEMINI_API_KEY) {
-      const prompt = `Você é um banco de dados de concursos.
-ID Único de Geração: ${fatorAleatorio}
+      const prompt = `[ID: ${fatorAleatorio}] - BANCAS: Simule ${bancaSorteada}.
+Gere ${quantidade} questão(ões) inédita(s) sobre "${disciplina}", tema "${assuntoFormatado}".
+REGRA VITAL: Crie uma situação ou caso prático NUNCA antes usado. A resposta deve exigir interpretação avançada.
 
-Sua tarefa: Gerar ${quantidade} questão(ões) INÉDITA(S) sobre a disciplina "${disciplina}", tema "${assuntoFormatado}".
-
-INSTRUÇÕES DE QUEBRA DE PADRÃO (MUITO IMPORTANTE):
-1. Estilo OBRIGATÓRIO desta requisição: ${bancaSorteada}. Adeque o texto perfeitamente a este estilo.
-2. Aborde uma nuance, exceção à regra ou caso prático MUITO ESPECÍFICO do tema. Fuja dos conceitos básicos que todo mundo conhece.
-3. Se usar um caso prático, invente nomes de personagens, cidades ou situações completamente novos.
-4. NUNCA repita a mesma estrutura ou os mesmos exemplos de gerações anteriores.
-
-Retorne APENAS um JSON válido no formato de array abaixo, sem blocos markdown:
+Retorne APENAS um array JSON:
 [
   {
-    "banca": "Simulação ${bancaSorteada.split(" ")[0]}",
-    "orgao": "Qpro Inéditas",
+    "banca": "Simulação ${bancaSorteada}",
+    "orgao": "Qpro",
     "ano": 2026,
     "disciplina": "${disciplina}",
     "assunto": "${assuntoFormatado}",
     "enunciado": "Texto da questão...",
     "explicacao": "Gabarito comentado...",
     "alternativas": [
-      { "texto": "Alternativa A", "is_correta": false },
-      { "texto": "Alternativa B", "is_correta": true },
-      { "texto": "Alternativa C", "is_correta": false },
-      { "texto": "Alternativa D", "is_correta": false },
-      { "texto": "Alternativa E", "is_correta": false }
+      { "texto": "Alt A", "is_correta": false },
+      { "texto": "Alt B", "is_correta": true },
+      { "texto": "Alt C", "is_correta": false },
+      { "texto": "Alt D", "is_correta": false },
+      { "texto": "Alt E", "is_correta": false }
     ]
   }
 ]`;
 
-      // 3. Corrigido para gemini-1.5-flash e adicionado "cache: 'no-store'" no fetch
       const resp = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          cache: "no-store", // <-- A MARTELADA FINAL NO CACHE DO NEXT.JS
+          cache: "no-store",
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { 
-              responseMimeType: "application/json",
-              temperature: 0.95
-            },
+            generationConfig: { responseMimeType: "application/json", temperature: 0.95 },
           }),
         }
       );
 
-      if (!resp.ok) {
-        const erroGoogle = await resp.text();
-        throw new Error(`Bloqueio do Google (Status ${resp.status}): ${erroGoogle}`);
-      }
+      if (!resp.ok) throw new Error(await resp.text());
 
       const data = await resp.json();
       const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      
       const cleanText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
       
-      let parsed;
-      try {
-        parsed = JSON.parse(cleanText);
-      } catch (e) {
-        throw new Error("O Gemini devolveu um texto que não é JSON válido: " + cleanText);
-      }
+      const parsed = JSON.parse(cleanText);
 
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return NextResponse.json({ questoes: parsed.slice(0, quantidade) });
-      } else {
-        throw new Error("O Gemini devolveu uma lista vazia.");
-      }
+      return NextResponse.json(
+        { questoes: parsed.slice(0, quantidade) },
+        {
+          headers: {
+            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          }
+        }
+      );
     }
 
-    throw new Error("A chave GEMINI_API_KEY não está a ser reconhecida pelo servidor da Vercel.");
+    throw new Error("Chave GEMINI não configurada no servidor.");
     
   } catch (err: any) {
-    return NextResponse.json(
-      { error: err?.message || "Erro desconhecido na geração com IA" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err?.message }, { status: 500 });
   }
 }
