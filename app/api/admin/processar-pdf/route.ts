@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
     // Configura o Gemini para forçar uma resposta em JSON perfeito
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-pro",
+      model: "gemini-1.5-pro-latest", // <-- Mude aqui!
       generationConfig: { responseMimeType: "application/json" }
     });
 
