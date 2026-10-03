@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-// @ts-ignore
-const pdfParse = require('pdf-parse');
+
+// 1. O require('pdf-parse') NÃO PODE ficar aqui no topo!
 
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
@@ -14,6 +14,9 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 
 export async function POST(request: Request) {
   try {
+    // 2. Coloque a importação AQUI DENTRO da função:
+    const pdfParse = require('pdf-parse');
+
     const formData = await request.formData();
     const provaFile = formData.get('prova') as File;
     const gabaritoFile = formData.get('gabarito') as File;
@@ -73,7 +76,6 @@ export async function POST(request: Request) {
 
     // Grava no Supabase (Tabelas 'questoes' e 'alternativas')
     for (const q of questoesJSON) {
-      // Ajuste os nomes dos campos abaixo (ex: 'enunciado', 'banca') caso a sua tabela do Supabase use nomes diferentes
       const { data: questaoData, error: qError } = await supabase
         .from('questoes')
         .insert([{ 
@@ -95,7 +97,7 @@ export async function POST(request: Request) {
         questao_id: questaoData.id,
         texto: a.texto,
         letra: a.letra,
-        is_correct: a.is_correct // No seu Supabase pode ser 'correta' em vez de 'is_correct'
+        is_correta: a.is_correct // Ajustado para is_correta que é o nome que o seu banco costuma usar
       }));
 
       const { error: aError } = await supabase
