@@ -1300,56 +1300,26 @@ function gerarQuestoesIneditasPorDisciplina(
   assuntoEscolhido: string,
   quantidade: number
 ) {
-  const embaralhar = (arr: any[]) => [...arr].sort(() => Math.random() - 0.5);
   const disc = normalizarDisciplina(disciplinaEscolhida || 'Direito Administrativo');
   const topico = assuntoEscolhido.trim() || 'Assuntos gerais da matéria';
 
-  const bancoEspecifico: Record<string, any[]> = {
-    'Direito Administrativo': [
-      {
-        assunto: assuntoEscolhido || 'Controle, Autotutela e Processo Administrativo',
-        enunciado:
-          'Na instrução de um processo administrativo revisional, constatou-se vício de legalidade na motivação de ato anterior. À luz da teoria dos motivos determinantes e da autotutela, assinale a afirmativa correta:',
-        explicacao:
-          'Pela teoria dos motivos determinantes, a validade do ato vincula-se aos motivos declarados como seu fundamento; se falsos ou inexistentes, o ato é nulo.',
-        alternativas: [
-          { texto: 'A falsidade ou inexistência material do motivo declarado invalida o ato, mesmo que a motivação não fosse originalmente obrigatória.', is_correta: true },
-          { texto: 'O gestor pode substituir livremente o motivo viciado após a impugnação sem necessidade de convalidar o ato.', is_correta: false },
-          { texto: 'Atos discricionários jamais se submetem ao controle de veracidade dos motivos declarados.', is_correta: false },
-          { texto: 'A anulação de ato por vício de motivo produz efeitos exclusivamente futuros (ex nunc).', is_correta: false },
-          { texto: 'Apenas o Poder Judiciário pode reconhecer a nulidade decorrente de vício nos motivos determinantes.', is_correta: false },
-        ],
-      },
-    ],
-  };
-
-  const especificas = bancoEspecifico[disc] || [];
-
-  const templatesDinamicos = [
-    {
-      enunciado: `No âmbito de ${disc}, especificamente quanto ao estudo de ${topico}, assinale a alternativa que expressa corretamente os preceitos técnicos, normativos e jurisprudenciais aplicáveis:`,
-      explicacao: `Gabarito Oficial: No estudo de ${disc} (${topico}), a aplicação técnica exige estrita conformidade com as normas de regência, motivação e controle, sendo incorretas as opções que afastam a legalidade ou a rastreabilidade dos procedimentos.`,
-      alternativas: [
-        { texto: `Os procedimentos técnicos e normativos relativos a ${topico} em ${disc} subordinam-se aos parâmetros de conformidade legal, rastreabilidade e controle de resultados.`, is_correta: true },
-        { texto: `As diretrizes aplicáveis a ${topico} possuem natureza meramente facultativa, não vinculando a análise técnica nos processos oficiais.`, is_correta: false },
-        { texto: `É dispensada a fundamentação formal na aplicação de ${topico} sempre que houver concordância verbal das partes.`, is_correta: false },
-        { texto: `A revisão técnica de atos atinentes a ${topico} em ${disc} é vedada após o encerramento do exercício mensal.`, is_correta: false },
-        { texto: `Inexiste incidência de controle interno ou externo sobre os registros decorrentes de ${topico}.`, is_correta: false },
-      ],
-    },
-  ];
-
-  const poolCombinado = [...especificas, ...templatesDinamicos].slice(0, quantidade);
-
-  return poolCombinado.map((item) => ({
-    banca: 'Qpro IA',
-    orgao: 'Simulado Inteligente',
+  // Novo Fallback Seguro: Se a IA falhar, a questão deixa claro que é offline 
+  // e NÃO tenta imitar as questões originais.
+  return Array.from({ length: quantidade }).map((_, index) => ({
+    banca: 'Qpro Fallback',
+    orgao: 'Simulado de Segurança',
     ano: new Date().getFullYear(),
     disciplina: disc,
-    assunto: item.assunto || topico,
-    enunciado: item.enunciado,
-    explicacao: item.explicacao,
-    alternativas: embaralhar(item.alternativas),
+    assunto: topico,
+    enunciado: `[Questão Gerada Offline] Devido a uma instabilidade temporária na inteligência artificial ou limite de requisições, apresentamos esta questão de reserva sobre ${topico} na disciplina de ${disc}. Assinale a alternativa correta:`,
+    explicacao: `Esta é uma questão de fallback gerada localmente. A IA do Google não conseguiu responder a tempo ou atingiu o limite de cota.`,
+    alternativas: [
+      { texto: 'Esta é uma alternativa incorreta gerada pelo sistema de segurança.', is_correta: false },
+      { texto: `A compreensão de ${topico} é fundamental para a disciplina de ${disc}. (Alternativa Correta de Segurança)`, is_correta: true },
+      { texto: 'Outra alternativa incorreta inserida por segurança.', is_correta: false },
+      { texto: 'Alternativa genérica para completar as opções.', is_correta: false },
+      { texto: 'Nenhuma das alternativas anteriores responde adequadamente.', is_correta: false },
+    ].sort(() => Math.random() - 0.5),
   }));
 }
 
@@ -1464,7 +1434,6 @@ export function BotaoNovaQuestao() {
     setModalIaAberto(true);
   };
 
-  // --- FUNÇÃO CORRIGIDA COM ALERTA DO ERRO REAL E TIMEOUT DE 55 SEGUNDOS ---
   const handleGerarQuestoesUsuarioIA = async (e: React.FormEvent) => {
     e.preventDefault();
     const disciplinaFinal =
@@ -1486,7 +1455,6 @@ export function BotaoNovaQuestao() {
 
       try {
         const controller = new AbortController();
-        // Aumentado para 55 segundos para dar folga máxima à IA!
         const timeoutId = setTimeout(() => controller.abort(), 55000); 
 
         const resp = await fetch('/api/gerar-ia', {
@@ -1550,7 +1518,6 @@ export function BotaoNovaQuestao() {
       setGerandoIa(false);
     }
   };
-  // -------------------------------------------------------------------------
 
   const restantesGratis = Math.max(0, LIMITE_QUESTOES_GRATIS - resolvidasGratis);
 
