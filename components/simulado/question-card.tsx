@@ -1320,7 +1320,7 @@ function gerarQuestoesIneditasPorDisciplina(
 ) {
   const embaralhar = (arr: any[]) => [...arr].sort(() => Math.random() - 0.5);
   const disc = normalizarDisciplina(disciplinaEscolhida || 'Direito Administrativo');
-  const topico = assuntoEscolhido.trim() || 'Conteúdo Programático e Jurisprudência';
+  const topico = assuntoEscolhido.trim() || 'Assuntos gerais da matéria';
 
   const bancoEspecifico: Record<string, any[]> = {
     'Direito Administrativo': [
@@ -1502,6 +1502,10 @@ export function BotaoNovaQuestao() {
     try {
       let novasQuestoes: any[] | null = null;
       try {
+        // Configuramos um AbortController para evitar falhas silenciosas de timeout na IA
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 segundos para a IA pensar
+
         const resp = await fetch('/api/gerar-ia', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1510,18 +1514,26 @@ export function BotaoNovaQuestao() {
             assunto: assuntoIa.trim(),
             quantidade: quantidadeSegura,
           }),
+          signal: controller.signal
         });
+        
+        clearTimeout(timeoutId);
+
         if (resp.ok) {
           const json = await resp.json();
           if (Array.isArray(json?.questoes) && json.questoes.length > 0) {
             novasQuestoes = json.questoes;
           }
+        } else {
+            console.error("Erro da API Gemini:", await resp.text());
         }
       } catch (e) {
-        console.log("Erro na API, usando gerador offline");
+        console.error("Falha ao comunicar com a IA. Ativando o gerador local (Fallback). Erro:", e);
       }
 
+      // Se a IA falhou, avisa o Admin (você) no navegador
       if (!novasQuestoes) {
+        alert("Atenção: A geração por IA falhou. Carregando questões padrão (offline). Verifique os logs do console.");
         novasQuestoes = gerarQuestoesIneditasPorDisciplina(
           disciplinaFinal,
           assuntoIa,
@@ -1547,7 +1559,7 @@ export function BotaoNovaQuestao() {
       window.location.href = `/app?disciplina=${encodeURIComponent(disciplinaFinal)}`;
       
     } catch (err: any) {
-      alert('Erro ao gerar questões com IA: ' + (err.message || 'Verifique a conexão.'));
+      alert('Erro grave ao gerar questões: ' + (err.message || 'Verifique a conexão.'));
     } finally {
       setGerandoIa(false);
     }
