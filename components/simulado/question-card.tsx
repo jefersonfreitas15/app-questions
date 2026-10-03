@@ -7,14 +7,8 @@ import { Upload, Loader2 } from 'lucide-react';
 // ==========================================
 // CONFIGURAÇÕES COMERCIAIS (VENDA & ATIVAÇÃO)
 // ==========================================
-// Cole aqui o seu link de checkout da Kiwify, Hotmart, Kirvano ou Mercado Pago:
 const LINK_CHECKOUT_PAGAMENTO = "https://pay.kiwify.com.br/VE1GbyL";
-
-// Limite de questões gratuitas para quem vem do anúncio testar o app:
 const LIMITE_QUESTOES_GRATIS = 5;
-
-// Códigos de ativação que liberam o Acesso Vitalício para o comprador:
-// (Usados como chaves-mestras para o Admin testar ou liberar acesso a amigos)
 const CODIGOS_ATIVACAO_VITALICIO = ["QPRO47", "VITALICIO", "QPRO2026", "APROVADO"];
 
 // ==========================================
@@ -72,7 +66,6 @@ function limparTextoEnunciado(textoBruto: string): string {
   return limpo;
 }
 
-// Verifica se o usuário tem acesso ilimitado liberado (Membro Vitalício)
 function usuarioTemAcessoTotal(): boolean {
   if (typeof window === 'undefined') return false;
   try {
@@ -82,7 +75,6 @@ function usuarioTemAcessoTotal(): boolean {
   }
 }
 
-// Contador blindado: não zera mesmo se o visitante clicar em "Reiniciar estatísticas"
 function obterTotalResolvidasLocal(): number {
   if (typeof window === 'undefined') return 0;
   try {
@@ -144,9 +136,6 @@ async function gravarListaDeQuestoesNoBanco(lista: any[]) {
   }
 }
 
-// ==========================================
-// 1. COMPONENTE DO PAINEL DE DESEMPENHO + DASHBOARD POR DISCIPLINA
-// ==========================================
 export function PainelDesempenho({
   initialRespostas = [],
   questions = [],
@@ -397,9 +386,6 @@ export function PainelDesempenho({
   );
 }
 
-// ==========================================
-// 2. COMPONENTE DO CARTÃO DE QUESTÃO ANIMADO
-// ==========================================
 export function QuestionCard({
   question,
   numeroAtual,
@@ -474,7 +460,6 @@ export function QuestionCard({
   const mostrarAno = Boolean(question.ano) && Number(question.ano) > 0;
   const mostrarOrgao = Boolean(question.orgao) && String(question.orgao).trim() !== '';
   const disciplinaExibida = normalizarDisciplina(question.disciplina);
-
   const enunciadoExibido = limparTextoEnunciado(question.enunciado);
 
   const toggleEliminarAlternativa = (e: React.MouseEvent, altKey: string, altId: any) => {
@@ -896,9 +881,6 @@ export function QuestionCard({
   );
 }
 
-// ==========================================
-// 3. CONTROLADOR DO CADERNO DE PROVA
-// ==========================================
 export function CadernoQuestoes({
   questions,
   totalCount,
@@ -1338,9 +1320,7 @@ function gerarQuestoesIneditasPorDisciplina(
           { texto: 'Apenas o Poder Judiciário pode reconhecer a nulidade decorrente de vício nos motivos determinantes.', is_correta: false },
         ],
       },
-      // ... outras questões default
     ],
-    // ... outras matérias
   };
 
   const especificas = bancoEspecifico[disc] || [];
@@ -1484,6 +1464,7 @@ export function BotaoNovaQuestao() {
     setModalIaAberto(true);
   };
 
+  // --- FUNÇÃO CORRIGIDA COM ALERTA DO ERRO REAL E TIMEOUT DE 55 SEGUNDOS ---
   const handleGerarQuestoesUsuarioIA = async (e: React.FormEvent) => {
     e.preventDefault();
     const disciplinaFinal =
@@ -1501,10 +1482,12 @@ export function BotaoNovaQuestao() {
 
     try {
       let novasQuestoes: any[] | null = null;
+      let erroExato = "";
+
       try {
-        // Configuramos um AbortController para evitar falhas silenciosas de timeout na IA
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 segundos para a IA pensar
+        // Aumentado para 55 segundos para dar folga máxima à IA!
+        const timeoutId = setTimeout(() => controller.abort(), 55000); 
 
         const resp = await fetch('/api/gerar-ia', {
           method: 'POST',
@@ -1525,15 +1508,18 @@ export function BotaoNovaQuestao() {
             novasQuestoes = json.questoes;
           }
         } else {
-            console.error("Erro da API Gemini:", await resp.text());
+            const erroTexto = await resp.text();
+            erroExato = `Erro do Servidor Vercel/Gemini: ${resp.status} - ${erroTexto}`;
+            console.error(erroExato);
         }
-      } catch (e) {
-        console.error("Falha ao comunicar com a IA. Ativando o gerador local (Fallback). Erro:", e);
+      } catch (e: any) {
+         erroExato = e.name === 'AbortError' ? "Tempo limite excedido (55 segundos)." : e.message;
+         console.error("Falha ao comunicar com a IA:", erroExato);
       }
 
-      // Se a IA falhou, avisa o Admin (você) no navegador
+      // Se a IA falhou, avisa mostrando a causa REAL
       if (!novasQuestoes) {
-        alert("Atenção: A geração por IA falhou. Carregando questões padrão (offline). Verifique os logs do console.");
+        alert(`A geração por IA falhou!\n\nMotivo exato do erro: ${erroExato}\n\nCarregando questões padrão offline.`);
         novasQuestoes = gerarQuestoesIneditasPorDisciplina(
           disciplinaFinal,
           assuntoIa,
@@ -1559,11 +1545,12 @@ export function BotaoNovaQuestao() {
       window.location.href = `/app?disciplina=${encodeURIComponent(disciplinaFinal)}`;
       
     } catch (err: any) {
-      alert('Erro grave ao gerar questões: ' + (err.message || 'Verifique a conexão.'));
+      alert('Erro grave no sistema: ' + (err.message || 'Verifique a conexão.'));
     } finally {
       setGerandoIa(false);
     }
   };
+  // -------------------------------------------------------------------------
 
   const restantesGratis = Math.max(0, LIMITE_QUESTOES_GRATIS - resolvidasGratis);
 
@@ -2045,7 +2032,6 @@ export function PainelAdminExclusivo() {
   const [senha, setSenha] = useState('');
   const [erroLogin, setErroLogin] = useState(false);
 
-  // NOVO ESTADO: 'prova_ia'
   const [abaAtiva, setAbaAtiva] = useState<'unica' | 'prova' | 'prova_ia' | 'json' | 'ferramentas'>('unica');
   const [salvando, setSalvando] = useState(false);
   const [erroMsg, setErroMsg] = useState('');
@@ -2382,7 +2368,6 @@ export function PainelAdminExclusivo() {
           </div>
         )}
 
-        {/* NOVA ABA: Importar PDF com IA */}
         {abaAtiva === 'prova_ia' && <ImportadorProvas />}
 
         {abaAtiva === 'ferramentas' && (
