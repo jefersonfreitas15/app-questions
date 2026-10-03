@@ -1295,33 +1295,6 @@ export function CadernoQuestoes({
 // ==========================================
 // 4. MOTOR GERADOR DE QUESTÕES COM IA + OFERTA VITALÍCIA R$ 47
 // ==========================================
-function gerarQuestoesIneditasPorDisciplina(
-  disciplinaEscolhida: string,
-  assuntoEscolhido: string,
-  quantidade: number
-) {
-  const disc = normalizarDisciplina(disciplinaEscolhida || 'Direito Administrativo');
-  const topico = assuntoEscolhido.trim() || 'Assuntos gerais da matéria';
-
-  // Novo Fallback Seguro: Se a IA falhar, a questão deixa claro que é offline 
-  // e NÃO tenta imitar as questões originais.
-  return Array.from({ length: quantidade }).map((_, index) => ({
-    banca: 'Qpro Fallback',
-    orgao: 'Simulado de Segurança',
-    ano: new Date().getFullYear(),
-    disciplina: disc,
-    assunto: topico,
-    enunciado: `[Questão Gerada Offline] Devido a uma instabilidade temporária na inteligência artificial ou limite de requisições, apresentamos esta questão de reserva sobre ${topico} na disciplina de ${disc}. Assinale a alternativa correta:`,
-    explicacao: `Esta é uma questão de fallback gerada localmente. A IA do Google não conseguiu responder a tempo ou atingiu o limite de cota.`,
-    alternativas: [
-      { texto: 'Esta é uma alternativa incorreta gerada pelo sistema de segurança.', is_correta: false },
-      { texto: `A compreensão de ${topico} é fundamental para a disciplina de ${disc}. (Alternativa Correta de Segurança)`, is_correta: true },
-      { texto: 'Outra alternativa incorreta inserida por segurança.', is_correta: false },
-      { texto: 'Alternativa genérica para completar as opções.', is_correta: false },
-      { texto: 'Nenhuma das alternativas anteriores responde adequadamente.', is_correta: false },
-    ].sort(() => Math.random() - 0.5),
-  }));
-}
 
 export function BotaoNovaQuestao() {
   const [vitalicioAtivo, setVitalicioAtivo] = useState(false);
@@ -1477,7 +1450,7 @@ export function BotaoNovaQuestao() {
           }
         } else {
             const erroTexto = await resp.text();
-            erroExato = `Erro do Servidor Vercel/Gemini: ${resp.status} - ${erroTexto}`;
+            erroExato = `Erro da API: ${resp.status} - ${erroTexto}`;
             console.error(erroExato);
         }
       } catch (e: any) {
@@ -1485,16 +1458,15 @@ export function BotaoNovaQuestao() {
          console.error("Falha ao comunicar com a IA:", erroExato);
       }
 
-      // Se a IA falhou, avisa mostrando a causa REAL
+      // CORREÇÃO CRÍTICA: Se a IA falhar, APENAS exibe o erro e ABORTA. 
+      // Não gera fallback e NÃO avança para salvar no banco de dados.
       if (!novasQuestoes) {
-        alert(`A geração por IA falhou!\n\nMotivo exato do erro: ${erroExato}\n\nCarregando questões padrão offline.`);
-        novasQuestoes = gerarQuestoesIneditasPorDisciplina(
-          disciplinaFinal,
-          assuntoIa,
-          quantidadeSegura
-        );
+        alert(`A geração por IA falhou!\n\nMotivo: ${erroExato}\n\nPor favor, verifique a sua cota da API ou tente novamente mais tarde.`);
+        setGerandoIa(false);
+        return; 
       }
 
+      // Se chegou aqui, as questões são 100% reais e geradas pela IA
       try {
         await gravarListaDeQuestoesNoBanco(novasQuestoes);
       } catch (dbError: any) {
