@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
+// Aumenta o tempo da Vercel para ler PDFs grandes
+export const maxDuration = 60; 
+
 const supabase = createClient(
   process.env.SUPABASE_URL as string,
   process.env.SUPABASE_SERVICE_ROLE_KEY as string
@@ -25,8 +28,9 @@ export async function POST(request: Request) {
     const provaBase64 = provaBuffer.toString('base64');
     const gabaritoBase64 = gabaritoBuffer.toString('base64');
 
+    // MODELO CORRIGIDO AQUI PARA O SDK DO GOOGLE
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-3.8-flash",
+      model: "gemini-1.5-flash-latest",
       generationConfig: { responseMimeType: "application/json" }
     });
 
@@ -62,8 +66,6 @@ export async function POST(request: Request) {
     ]);
 
     let respostaTexto = result.response.text();
-    
-    // LIMPEZA CRÍTICA: Remove a formatação markdown que a IA pode inserir
     respostaTexto = respostaTexto.replace(/```json/g, '').replace(/```/g, '').trim();
 
     const questoesJSON = JSON.parse(respostaTexto);

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 
-// 1. Configurações para evitar Cache e Aumentar o Tempo limite da Vercel
 export const dynamic = 'force-dynamic';
 export const fetchCache = 'force-no-store';
-export const maxDuration = 60; // <-- A MÁGICA: Dá até 60 segundos para a IA pensar sem cortar!
+export const maxDuration = 60;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 
@@ -44,8 +43,9 @@ Retorne APENAS um array JSON:
   }
 ]`;
 
+      // MODELO ATUALIZADO AQUI PARA A VERSÃO LATEST UNIVERSAL
       const resp = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
