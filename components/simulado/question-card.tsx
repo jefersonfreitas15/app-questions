@@ -8,7 +8,9 @@ import { Upload, Loader2 } from 'lucide-react';
 // CONFIGURAÇÕES COMERCIAIS (VENDA & ATIVAÇÃO)
 // ==========================================
 const LINK_CHECKOUT_PAGAMENTO = "https://pay.kiwify.com.br/VE1GbyL";
+const LINK_COMPRAR_CREDITOS_IA = "https://pay.kiwify.com.br/SEU_LINK_DE_CREDITOS_AQUI"; // Atualize depois
 const LIMITE_QUESTOES_GRATIS = 5;
+const LIMITE_IA_GERADAS = 10;
 const CODIGOS_ATIVACAO_VITALICIO = ["QPRO47", "VITALICIO", "QPRO2026", "APROVADO"];
 
 // ==========================================
@@ -900,12 +902,24 @@ export function CadernoQuestoes({
   const [questoesErros, setQuestoesErros] = useState<any[]>([]);
   const [questoesFavoritas, setQuestoesFavoritas] = useState<any[]>([]);
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // NOVA LÓGICA DE PAGINAÇÃO: ÍNDICES INDEPENDENTES POR ABA
+  const [indicesAbas, setIndicesAbas] = useState({ todas: 0, erros: 0, favoritas: 0 });
+  const currentIndex = indicesAbas[modoCaderno];
+
+  const atualizarIndiceAtual = (novoValor: number | ((prev: number) => number)) => {
+    setIndicesAbas((prev) => {
+      const valorAntigo = prev[modoCaderno];
+      const valorFinal = typeof novoValor === 'function' ? novoValor(valorAntigo) : novoValor;
+      return { ...prev, [modoCaderno]: valorFinal };
+    });
+  };
+
   const [cacheRemoto, setCacheRemoto] = useState<Record<number, any>>({});
   const [carregandoRemoto, setCarregandoRemoto] = useState(false);
   const [irParaInput, setIrParaInput] = useState('');
 
-  const chaveFiltroAtual = `${modoCaderno}-${filtros?.banca || ''}-${filtros?.orgao || ''}-${filtros?.ano || ''}-${filtros?.disciplina || ''}-${filtros?.assunto || ''}`;
+  // A chave de filtro AGORA ignora a aba, só reseta as páginas se alterar banco/órgão/etc
+  const chaveFiltroAtual = `${filtros?.banca || ''}-${filtros?.orgao || ''}-${filtros?.ano || ''}-${filtros?.disciplina || ''}-${filtros?.assunto || ''}`;
 
   const sincronizarListasEstudo = async () => {
     try {
@@ -998,32 +1012,10 @@ export function CadernoQuestoes({
       : listaAtiva.length;
 
   useEffect(() => {
-    try {
-      const filtroSalvo = sessionStorage.getItem('qpro_filtro_ativo');
-      const indexSalvo = sessionStorage.getItem('qpro_questao_index');
-
-      if (filtroSalvo === chaveFiltroAtual && indexSalvo !== null) {
-        const idx = parseInt(indexSalvo, 10);
-        if (!isNaN(idx) && idx >= 0) {
-          setCurrentIndex(idx);
-          return;
-        }
-      }
-      setCurrentIndex(0);
-      sessionStorage.setItem('qpro_filtro_ativo', chaveFiltroAtual);
-      sessionStorage.setItem('qpro_questao_index', '0');
-    } catch (e) {
-      setCurrentIndex(0);
-    }
+    // Quando mudam os FILTROS REAIS, reiniciamos as páginas de todas as abas para a primeira
+    setIndicesAbas({ todas: 0, erros: 0, favoritas: 0 });
     setCacheRemoto({});
   }, [chaveFiltroAtual]);
-
-  useEffect(() => {
-    try {
-      sessionStorage.setItem('qpro_filtro_ativo', chaveFiltroAtual);
-      sessionStorage.setItem('qpro_questao_index', String(currentIndex));
-    } catch (e) {}
-  }, [currentIndex, chaveFiltroAtual]);
 
   useEffect(() => {
     if (modoCaderno !== 'todas') return;
@@ -1101,7 +1093,7 @@ export function CadernoQuestoes({
     e.preventDefault();
     const num = parseInt(irParaInput, 10);
     if (!isNaN(num) && num >= 1 && num <= total) {
-      setCurrentIndex(num - 1);
+      atualizarIndiceAtual(num - 1);
       setIrParaInput('');
     }
   };
@@ -1227,7 +1219,7 @@ export function CadernoQuestoes({
                   <button
                     key={`page-${pageIndex}`}
                     type="button"
-                    onClick={() => setCurrentIndex(pageIndex)}
+                    onClick={() => atualizarIndiceAtual(pageIndex)}
                     className={`min-w-9 h-9 px-2.5 rounded-xl text-xs font-bold transition-all duration-200 active:scale-90 border ${
                       ativo
                         ? 'bg-gradient-to-tr from-indigo-600 to-violet-500 text-white border-indigo-600 shadow-sm shadow-indigo-200 scale-105'
@@ -1257,7 +1249,7 @@ export function CadernoQuestoes({
 
               <button
                 type="button"
-                onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+                onClick={() => atualizarIndiceAtual((prev) => Math.max(0, prev - 1))}
                 disabled={indiceSeguro === 0}
                 className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
@@ -1265,7 +1257,7 @@ export function CadernoQuestoes({
               </button>
               <button
                 type="button"
-                onClick={() => setCurrentIndex((prev) => Math.min(total - 1, prev + 1))}
+                onClick={() => atualizarIndiceAtual((prev) => Math.min(total - 1, prev + 1))}
                 disabled={indiceSeguro === total - 1}
                 className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-500 shadow-xs shadow-indigo-200 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
@@ -1305,6 +1297,9 @@ export function BotaoNovaQuestao() {
   const [loadingAtivacao, setLoadingAtivacao] = useState(false);
   const [resolvidasGratis, setResolvidasGratis] = useState(0);
 
+  // CONTADOR DE CRÉDITOS IA
+  const [iaUsadas, setIaUsadas] = useState(0);
+
   const [modalIaAberto, setModalIaAberto] = useState(false);
   const [disciplinasBanco, setDisciplinasBanco] = useState<string[]>([
     'Direito Administrativo',
@@ -1321,6 +1316,7 @@ export function BotaoNovaQuestao() {
     try {
       setVitalicioAtivo(usuarioTemAcessoTotal());
       setResolvidasGratis(obterTotalResolvidasLocal());
+      setIaUsadas(Number(localStorage.getItem('qpro_ia_usadas') || '0'));
     } catch (e) {}
   };
 
@@ -1420,6 +1416,13 @@ export function BotaoNovaQuestao() {
     }
 
     const quantidadeSegura = Math.min(Math.max(Number(qtdIa) || 5, 1), 5);
+
+    // VALIDAÇÃO DE CRÉDITOS IA
+    if (iaUsadas + quantidadeSegura > LIMITE_IA_GERADAS) {
+      alert(`⚠️ Limite de Créditos IA Atingido!\n\nVocê já gerou ${iaUsadas} de ${LIMITE_IA_GERADAS} questões gratuitas permitidas no plano base.\n\nPara continuar a gerar questões inéditas com IA, adquira um Pacote de Créditos clicando no botão amarelo dentro da janela da IA.`);
+      return;
+    }
+
     setGerandoIa(true);
 
     try {
@@ -1477,6 +1480,11 @@ export function BotaoNovaQuestao() {
         }
       }
 
+      // SUCESSO: DESCONTA OS CRÉDITOS
+      const novoTotal = iaUsadas + quantidadeSegura;
+      localStorage.setItem('qpro_ia_usadas', String(novoTotal));
+      setIaUsadas(novoTotal);
+
       setModalIaAberto(false);
       setAssuntoIa('');
       window.location.href = `/app?disciplina=${encodeURIComponent(disciplinaFinal)}`;
@@ -1489,6 +1497,7 @@ export function BotaoNovaQuestao() {
   };
 
   const restantesGratis = Math.max(0, LIMITE_QUESTOES_GRATIS - resolvidasGratis);
+  const esgotouCreditos = iaUsadas >= LIMITE_IA_GERADAS;
 
   return (
     <>
@@ -1756,6 +1765,24 @@ export function BotaoNovaQuestao() {
               </button>
             </div>
 
+            {/* PAINEL DE CRÉDITOS IA */}
+            <div className="mb-5 flex items-center justify-between bg-indigo-50 border border-indigo-100 p-3 rounded-xl">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-500">Créditos de API</span>
+                <div className="text-sm font-bold text-indigo-900 mt-0.5">
+                  {iaUsadas} / {LIMITE_IA_GERADAS} Geradas
+                </div>
+              </div>
+              <a 
+                href={LINK_COMPRAR_CREDITOS_IA} 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-amber-400 hover:bg-amber-500 text-amber-950 px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase shadow-sm transition-all active:scale-95"
+              >
+                + Comprar Pacote
+              </a>
+            </div>
+
             <form onSubmit={handleGerarQuestoesUsuarioIA} className="flex flex-col gap-4">
               <div>
                 <label
@@ -1831,12 +1858,13 @@ export function BotaoNovaQuestao() {
                         key={num}
                         type="button"
                         onClick={() => setQtdIa(num)}
+                        disabled={esgotouCreditos}
                         style={
                           ativo
                             ? { backgroundColor: '#4F46E5', color: '#FFFFFF', borderColor: '#4F46E5' }
                             : { backgroundColor: '#F8FAFC', color: '#334155', borderColor: '#E2E8F0' }
                         }
-                        className="py-2 rounded-xl border text-xs font-bold transition-all active:scale-95"
+                        className="py-2 rounded-xl border text-xs font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {num} {num === 1 ? 'questão' : 'questões'}
                       </button>
@@ -1856,11 +1884,13 @@ export function BotaoNovaQuestao() {
                 </button>
                 <button
                   type="submit"
-                  disabled={gerandoIa}
+                  disabled={gerandoIa || esgotouCreditos}
                   className="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50 shadow-sm shadow-indigo-200"
                 >
                   {gerandoIa
                     ? `⏳ Gerando ${qtdIa} ${qtdIa === 1 ? 'questão' : 'questões'}...`
+                    : esgotouCreditos 
+                    ? `Limite Atingido`
                     : `✨ Gerar ${qtdIa} ${qtdIa === 1 ? 'Questão' : 'Questões'}`}
                 </button>
               </div>
