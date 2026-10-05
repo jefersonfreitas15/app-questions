@@ -123,7 +123,7 @@ async function gravarListaDeQuestoesNoBanco(lista: any[]) {
     const payloadAlts = (q.alternativas || []).map((a: any) => ({
       questao_id: novaQ.id,
       texto: limparMathML(String(a.texto || '')),
-      is_correta: Boolean(a.is_correta),
+      is_correta: Boolean(a.is_correta || a.is_correct),
     }));
 
     const { error: errAlts } = await supabase
@@ -1458,15 +1458,12 @@ export function BotaoNovaQuestao() {
          console.error("Falha ao comunicar com a IA:", erroExato);
       }
 
-      // CORREÇÃO CRÍTICA: Se a IA falhar, APENAS exibe o erro e ABORTA. 
-      // Não gera fallback e NÃO avança para salvar no banco de dados.
       if (!novasQuestoes) {
         alert(`A geração por IA falhou!\n\nMotivo: ${erroExato}\n\nPor favor, verifique a sua cota da API ou tente novamente mais tarde.`);
         setGerandoIa(false);
         return; 
       }
 
-      // Se chegou aqui, as questões são 100% reais e geradas pela IA
       try {
         await gravarListaDeQuestoesNoBanco(novasQuestoes);
       } catch (dbError: any) {
@@ -1876,20 +1873,21 @@ export function BotaoNovaQuestao() {
 }
 
 // ==========================================
-// 5. IMPORTADOR DE PROVAS COM IA (NOVO COMPONENTE)
+// 5. IMPORTADOR DE PROVAS COM IA (ATUALIZADO COM SALA DE ESPERA)
 // ==========================================
 export function ImportadorProvas() {
   const [provaPdf, setProvaPdf] = useState<File | null>(null);
   const [gabaritoPdf, setGabaritoPdf] = useState<File | null>(null);
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "review" | "saving" | "success" | "error">("idle");
   const [mensagem, setMensagem] = useState("");
+  const [questoesExtraidas, setQuestoesExtraidas] = useState<any[]>([]);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!provaPdf || !gabaritoPdf) return setMensagem("Selecione os 2 PDFs.");
     
     setStatus("loading");
-    setMensagem("O Gemini IA está a ler a prova e o gabarito. Isto pode demorar alguns segundos...");
+    setMensagem("A IA está a ler a prova e o gabarito. Isto pode demorar até 60 segundos...");
 
     const formData = new FormData();
     formData.append("prova", provaPdf);
@@ -1897,14 +1895,39 @@ export function ImportadorProvas() {
 
     try {
       const res = await fetch("/api/admin/processar-pdf", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Erro desconhecido ao processar.");
       
-      setStatus("success");
-      setMensagem(`Sucesso! ${data.questoesInseridas} questões foram extraídas e importadas para o Supabase.`);
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseError) {
+        throw new Error("O servidor demorou muito a responder ou o ficheiro é demasiado pesado.");
+      }
+
+      if (!res.ok) throw new Error(data.error || "Erro desconhecido ao processar.");
+      if (!data.questoes || data.questoes.length === 0) throw new Error("A IA não conseguiu extrair nenhuma questão válida deste PDF.");
+      
+      setQuestoesExtraidas(data.questoes);
+      setStatus("review");
+      setMensagem(`Foram encontradas ${data.questoes.length} questões. Por favor, valide os dados antes de gravar no banco.`);
     } catch (err: any) {
       setStatus("error");
       setMensagem(err.message);
+    }
+  };
+
+  const handleConfirmarSalvar = async () => {
+    setStatus("saving");
+    setMensagem("A gravar as questões validadas no Supabase...");
+    try {
+      await gravarListaDeQuestoesNoBanco(questoesExtraidas);
+      setStatus("success");
+      setMensagem(`Sucesso! ${questoesExtraidas.length} questões foram importadas para o banco.`);
+      setQuestoesExtraidas([]);
+      setProvaPdf(null);
+      setGabaritoPdf(null);
+    } catch (err: any) {
+      setStatus("error");
+      setMensagem("Erro ao guardar no banco: " + err.message);
     }
   };
 
@@ -1912,48 +1935,83 @@ export function ImportadorProvas() {
     <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-6">
       <h3 className="font-bold text-lg mb-1 flex items-center gap-2">
         <Upload className="w-5 h-5 text-indigo-500" />
-        Importar PDF com IA (Gemini)
+        Importar PDF com IA (Validação Segura)
       </h3>
       <p className="text-xs text-slate-500 mb-5">
-        Envie o Caderno de Prova e o Gabarito Oficial. A IA fará o cruzamento das informações automaticamente.
+        A IA extrai os dados, você confere no ecrã e só depois guarda no banco de dados.
       </p>
 
-      <form onSubmit={handleUpload} className="grid sm:grid-cols-2 gap-4 items-end">
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Caderno de Prova (PDF)</label>
-          <input 
-            type="file" 
-            accept=".pdf" 
-            onChange={(e) => setProvaPdf(e.target.files?.[0] || null)} 
-            className="w-full text-sm border border-slate-200 p-2 rounded-xl text-slate-600 bg-slate-50" 
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Gabarito Oficial (PDF)</label>
-          <input 
-            type="file" 
-            accept=".pdf" 
-            onChange={(e) => setGabaritoPdf(e.target.files?.[0] || null)} 
-            className="w-full text-sm border border-slate-200 p-2 rounded-xl text-slate-600 bg-slate-50" 
-          />
-        </div>
-        <div className="sm:col-span-2">
-          <button 
-            type="submit" 
-            disabled={status === "loading"} 
-            className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl flex justify-center gap-2 hover:bg-indigo-500 disabled:opacity-50 transition-all shadow-sm"
-          >
-            {status === "loading" ? <><Loader2 className="w-5 h-5 animate-spin" /> Processando com Inteligência Artificial...</> : "Extrair e Salvar Questões no Banco"}
-          </button>
-        </div>
-      </form>
+      {status !== "review" && status !== "saving" && (
+        <form onSubmit={handleUpload} className="grid sm:grid-cols-2 gap-4 items-end">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Caderno de Prova (PDF)</label>
+            <input 
+              type="file" 
+              accept=".pdf" 
+              onChange={(e) => setProvaPdf(e.target.files?.[0] || null)} 
+              className="w-full text-sm border border-slate-200 p-2 rounded-xl text-slate-600 bg-slate-50" 
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Gabarito Oficial (PDF)</label>
+            <input 
+              type="file" 
+              accept=".pdf" 
+              onChange={(e) => setGabaritoPdf(e.target.files?.[0] || null)} 
+              className="w-full text-sm border border-slate-200 p-2 rounded-xl text-slate-600 bg-slate-50" 
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <button 
+              type="submit" 
+              disabled={status === "loading"} 
+              className="w-full bg-indigo-600 text-white font-bold py-2.5 rounded-xl flex justify-center gap-2 hover:bg-indigo-500 disabled:opacity-50 transition-all shadow-sm"
+            >
+              {status === "loading" ? <><Loader2 className="w-5 h-5 animate-spin" /> A Processar PDFs com IA...</> : "Ler PDF e Gerar Pré-visualização"}
+            </button>
+          </div>
+        </form>
+      )}
 
-      {mensagem && (
-        <div className={`mt-4 p-3 rounded-xl text-sm font-medium border ${
+      {status === "review" && (
+        <div className="mt-4 border border-amber-200 bg-amber-50 rounded-xl p-4">
+          <h4 className="font-bold text-amber-800 mb-3 text-sm">Pré-visualização (Ainda não guardado)</h4>
+          <div className="max-h-64 overflow-y-auto space-y-3 mb-4 bg-white p-3 rounded-lg border border-amber-100">
+            {questoesExtraidas.map((q, idx) => (
+              <div key={idx} className="border-b border-slate-100 pb-2 mb-2 last:border-0">
+                <span className="text-[10px] font-bold text-indigo-600 uppercase">Q{idx + 1} - {q.banca} - {q.disciplina}</span>
+                <p className="text-xs text-slate-700 mt-1 line-clamp-2">{q.enunciado}</p>
+                <div className="mt-1 flex gap-2">
+                  <span className="text-[10px] text-slate-500">{q.alternativas?.length || 0} alternativas identificadas.</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setStatus("idle")} 
+              className="flex-1 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
+            >
+              Descartar e Tentar Novo PDF
+            </button>
+            <button 
+              onClick={handleConfirmarSalvar} 
+              className="flex-1 py-2 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-500 shadow-sm"
+            >
+              Validar e Guardar no Banco
+            </button>
+          </div>
+        </div>
+      )}
+
+      {mensagem && status !== "review" && (
+        <div className={`mt-4 p-3 rounded-xl text-sm font-medium border flex items-center gap-2 ${
           status === "error" ? "bg-rose-50 text-rose-700 border-rose-200" : 
           status === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : 
-          "bg-indigo-50 text-indigo-700 border-indigo-200"
+          status === "saving" ? "bg-indigo-50 text-indigo-700 border-indigo-200" :
+          "bg-sky-50 text-sky-700 border-sky-200"
         }`}>
+          {status === "saving" && <Loader2 className="w-4 h-4 animate-spin" />}
           {mensagem}
         </div>
       )}
@@ -1971,23 +2029,11 @@ export function PainelAdminExclusivo() {
   const [senha, setSenha] = useState('');
   const [erroLogin, setErroLogin] = useState(false);
 
-  const [abaAtiva, setAbaAtiva] = useState<'unica' | 'prova' | 'prova_ia' | 'json' | 'ferramentas'>('unica');
+  // ABA ATIVA AGORA COMEÇA NA IMPORTAÇÃO DE PDF
+  const [abaAtiva, setAbaAtiva] = useState<'prova_ia' | 'json' | 'ferramentas'>('prova_ia');
   const [salvando, setSalvando] = useState(false);
   const [erroMsg, setErroMsg] = useState('');
   const [sucessoMsg, setSucessoMsg] = useState('');
-
-  const [banca, setBanca] = useState('');
-  const [orgao, setOrgao] = useState('');
-  const [ano, setAno] = useState('');
-  const [disciplina, setDisciplina] = useState('');
-  const [assunto, setAssunto] = useState('');
-
-  const [enunciado, setEnunciado] = useState('');
-  const [explicacao, setExplicacao] = useState('');
-  const [alternativas, setAlternativas] = useState(['', '', '', '', '']);
-  const [corretaIndex, setCorretaIndex] = useState(0);
-
-  const [textoProvaNova, setTextoProvaNova] = useState('');
   const [jsonLoteTexto, setJsonLoteTexto] = useState('');
 
   useEffect(() => {
@@ -2015,133 +2061,6 @@ export function PainelAdminExclusivo() {
     setSenha('');
   };
 
-  const atualizarAlternativa = (index: number, valor: string) => {
-    const novas = [...alternativas];
-    novas[index] = valor;
-    setAlternativas(novas);
-  };
-
-  const handleSalvarQuestao = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErroMsg('');
-    setSucessoMsg('');
-
-    if (!enunciado.trim() || !disciplina.trim()) {
-      setErroMsg('Preencha pelo menos a Disciplina e o Enunciado.');
-      return;
-    }
-
-    const altsPreenchidas = alternativas
-      .map((texto, idx) => ({
-        texto: texto.trim(),
-        is_correta: idx === corretaIndex,
-      }))
-      .filter((a) => a.texto !== '');
-
-    if (altsPreenchidas.length < 2) {
-      setErroMsg('Preencha pelo menos 2 alternativas.');
-      return;
-    }
-
-    setSalvando(true);
-    try {
-      await gravarListaDeQuestoesNoBanco([
-        {
-          banca: banca.trim(),
-          orgao: orgao.trim(),
-          ano: ano.trim() ? Number(ano) : 0,
-          disciplina: normalizarDisciplina(disciplina),
-          assunto,
-          enunciado,
-          explicacao,
-          alternativas: altsPreenchidas,
-        },
-      ]);
-      setEnunciado('');
-      setExplicacao('');
-      setAlternativas(['', '', '', '', '']);
-      setCorretaIndex(0);
-      setSucessoMsg('✅ Questão cadastrada com sucesso no Supabase!');
-    } catch (err: any) {
-      setErroMsg(err.message || 'Erro ao salvar no Supabase.');
-    } finally {
-      setSalvando(false);
-    }
-  };
-
-  const handleImportarProvaTexto = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErroMsg('');
-    setSucessoMsg('');
-
-    if (!disciplina.trim()) {
-      setErroMsg('Informe a Disciplina padrão para este bloco de questões.');
-      return;
-    }
-
-    try {
-      const blocos = textoProvaNova
-        .split(/\n---+\n/)
-        .map((b) => b.trim())
-        .filter(Boolean);
-
-      if (blocos.length === 0) {
-        setErroMsg('Nenhuma questão identificada no texto.');
-        return;
-      }
-
-      const questoesMontadas = blocos.map((bloco, i) => {
-        const linhas = bloco
-          .split('\n')
-          .map((l) => l.trim())
-          .filter(Boolean);
-
-        const enunciadoLinhas: string[] = [];
-        const alts: { texto: string; is_correta: boolean }[] = [];
-        let comentario = 'Comentário cadastrado via importação em lote.';
-
-        for (const linha of linhas) {
-          if (/^coment[aá]rio:/i.test(linha)) {
-            comentario = linha.replace(/^coment[aá]rio:\s*/i, '').trim();
-          } else if (/^\*?[A-Ea-e][\)\.\-]\s+/.test(linha)) {
-            const marcadaCorreta = linha.startsWith('*');
-            const textoLimpo = linha.replace(/^\*?[A-Ea-e][\)\.\-]\s+/, '').trim();
-            alts.push({ texto: textoLimpo, is_correta: marcadaCorreta });
-          } else {
-            enunciadoLinhas.push(linha);
-          }
-        }
-
-        if (alts.length < 2) {
-          throw new Error(`A questão #${i + 1} precisa ter pelo menos 2 alternativas (ex: A) texto).`);
-        }
-        if (!alts.some((a) => a.is_correta)) {
-          alts[0].is_correta = true;
-        }
-
-        return {
-          banca: banca.trim(),
-          orgao: orgao.trim(),
-          ano: ano.trim() ? Number(ano) : 0,
-          disciplina: normalizarDisciplina(disciplina),
-          assunto: assunto || 'Geral',
-          enunciado: enunciadoLinhas.join(' '),
-          explicacao: comentario,
-          alternativas: alts,
-        };
-      });
-
-      setSalvando(true);
-      await gravarListaDeQuestoesNoBanco(questoesMontadas);
-      setTextoProvaNova('');
-      setSucessoMsg(`✅ ${questoesMontadas.length} questões lançadas com sucesso no banco!`);
-    } catch (err: any) {
-      setErroMsg(err.message || 'Erro ao processar o texto da prova.');
-    } finally {
-      setSalvando(false);
-    }
-  };
-
   const handleImportarJsonColado = async (e: React.FormEvent) => {
     e.preventDefault();
     setErroMsg('');
@@ -2159,8 +2078,6 @@ export function PainelAdminExclusivo() {
       setSalvando(false);
     }
   };
-
-  const letras = ['A', 'B', 'C', 'D', 'E'];
 
   if (!autenticado) {
     return (
@@ -2215,7 +2132,7 @@ export function PainelAdminExclusivo() {
               ⚙️ Painel Administrativo Qpro Concursos
             </h1>
             <p className="text-xs text-slate-500">
-              Cadastre questões, importe provas ou gerencie testes de venda
+              Importe provas em PDF ou em lote JSON
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -2238,18 +2155,6 @@ export function PainelAdminExclusivo() {
         <div className="flex flex-wrap items-center gap-2 mb-5">
           <button
             type="button"
-            onClick={() => setAbaAtiva('unica')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-              abaAtiva === 'unica'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            📝 Cadastrar 1 Questão
-          </button>
-          
-          <button
-            type="button"
             onClick={() => setAbaAtiva('prova_ia')}
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
               abaAtiva === 'prova_ia'
@@ -2257,20 +2162,9 @@ export function PainelAdminExclusivo() {
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            🤖 PDF com IA (Gemini)
+            🤖 Importar PDF (IA)
           </button>
 
-          <button
-            type="button"
-            onClick={() => setAbaAtiva('prova')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-              abaAtiva === 'prova'
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            📋 Lançar Prova em Texto
-          </button>
           <button
             type="button"
             onClick={() => setAbaAtiva('json')}
@@ -2280,7 +2174,7 @@ export function PainelAdminExclusivo() {
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            📥 Importar Lote JSON
+            📥 Importar Base Lote (JSON)
           </button>
           <button
             type="button"
@@ -2343,194 +2237,6 @@ export function PainelAdminExclusivo() {
               </button>
             </div>
           </div>
-        )}
-
-        {abaAtiva === 'unica' && (
-          <form onSubmit={handleSalvarQuestao} className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Banca (opcional)</label>
-                <input
-                  type="text"
-                  value={banca}
-                  onChange={(e) => setBanca(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Órgão (opcional)</label>
-                <input
-                  type="text"
-                  value={orgao}
-                  onChange={(e) => setOrgao(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Ano (opcional)</label>
-                <input
-                  type="number"
-                  value={ano}
-                  onChange={(e) => setAno(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-xl text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Disciplina *</label>
-                <input
-                  type="text"
-                  required
-                  value={disciplina}
-                  onChange={(e) => setDisciplina(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Assunto</label>
-                <input
-                  type="text"
-                  value={assunto}
-                  onChange={(e) => setAssunto(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-xl text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-600">Enunciado *</label>
-              <textarea
-                rows={3}
-                required
-                value={enunciado}
-                onChange={(e) => setEnunciado(e.target.value)}
-                className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-xl text-sm"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-600 block mb-2">
-                Alternativas (Marque a CORRETA) *
-              </label>
-              <div className="flex flex-col gap-2">
-                {letras.map((letra, idx) => (
-                  <div key={letra} className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="alternativa_correta"
-                      checked={corretaIndex === idx}
-                      onChange={() => setCorretaIndex(idx)}
-                      className="w-4 h-4 accent-emerald-600 cursor-pointer"
-                    />
-                    <span className="text-xs font-bold text-slate-600 w-5">{letra})</span>
-                    <input
-                      type="text"
-                      value={alternativas[idx]}
-                      onChange={(e) => atualizarAlternativa(idx, e.target.value)}
-                      className="flex-1 px-3 py-1.5 border border-slate-200 rounded-xl text-sm"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-600">Comentário / Fundamentação</label>
-              <textarea
-                rows={2}
-                value={explicacao}
-                onChange={(e) => setExplicacao(e.target.value)}
-                className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-xl text-sm"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={salvando}
-              className="self-end px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500 disabled:opacity-50"
-            >
-              {salvando ? 'Salvando...' : 'Salvar Questão no Banco'}
-            </button>
-          </form>
-        )}
-
-        {abaAtiva === 'prova' && (
-          <form onSubmit={handleImportarProvaTexto} className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Banca (opcional)</label>
-                <input
-                  type="text"
-                  value={banca}
-                  onChange={(e) => setBanca(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Órgão (opcional)</label>
-                <input
-                  type="text"
-                  value={orgao}
-                  onChange={(e) => setOrgao(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Ano (opcional)</label>
-                <input
-                  type="number"
-                  value={ano}
-                  onChange={(e) => setAno(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-xl text-sm"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Disciplina do Bloco *</label>
-                <input
-                  type="text"
-                  required
-                  value={disciplina}
-                  onChange={(e) => setDisciplina(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-xl text-sm"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-slate-600">Assunto</label>
-                <input
-                  type="text"
-                  value={assunto}
-                  onChange={(e) => setAssunto(e.target.value)}
-                  className="w-full mt-1 px-3 py-2 border border-slate-200 rounded-xl text-sm"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs font-semibold text-slate-600 block mb-1">
-                Questões separadas por <code>---</code> (marque a correta com <code>*</code> na frente):
-              </label>
-              <textarea
-                rows={9}
-                required
-                value={textoProvaNova}
-                onChange={(e) => setTextoProvaNova(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={salvando}
-              className="self-end px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 disabled:opacity-50"
-            >
-              {salvando ? 'Lançando...' : '🚀 Lançar Bloco Inteiro'}
-            </button>
-          </form>
         )}
 
         {abaAtiva === 'json' && (

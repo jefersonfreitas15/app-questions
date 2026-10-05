@@ -1,13 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export const maxDuration = 60; 
-
-const supabase = createClient(
-  process.env.SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string
-);
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 
@@ -50,8 +44,8 @@ export async function POST(request: Request) {
           "ano": 2026,
           "disciplina": "Tente adivinhar a disciplina (ex: Português, Direito Administrativo)",
           "alternativas": [
-            { "texto": "Texto da alternativa A", "letra": "A", "is_correct": false },
-            { "texto": "Texto da alternativa B", "letra": "B", "is_correct": true }
+            { "texto": "Texto da alternativa A", "letra": "A", "is_correta": false },
+            { "texto": "Texto da alternativa B", "letra": "B", "is_correta": true }
           ]
         }
       ]
@@ -68,41 +62,12 @@ export async function POST(request: Request) {
 
     const questoesJSON = JSON.parse(respostaTexto);
 
-    let inseridas = 0;
-
-    for (const q of questoesJSON) {
-      const { data: questaoData, error: qError } = await supabase
-        .from('questoes')
-        .insert([{ 
-          enunciado: q.enunciado, 
-          banca: q.banca, 
-          orgao: q.orgao, 
-          ano: q.ano,
-          disciplina: q.disciplina || 'Geral'
-        }])
-        .select('id')
-        .single();
-
-      if (qError) continue;
-
-      const altsParaInserir = q.alternativas.map((a: any) => ({
-        questao_id: questaoData.id,
-        texto: a.texto,
-        letra: a.letra,
-        is_correta: a.is_correct || a.is_correta
-      }));
-
-      const { error: aError } = await supabase
-        .from('alternativas')
-        .insert(altsParaInserir);
-
-      if (!aError) inseridas++;
-    }
-
-    return NextResponse.json({ success: true, questoesInseridas: inseridas });
+    // ALTERAÇÃO: O servidor já não grava no banco. Apenas devolve as questões para o frontend exibir a pré-visualização.
+    return NextResponse.json({ questoes: questoesJSON });
 
   } catch (err: any) {
     console.error("Erro no processamento:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    // Garante que o frontend recebe sempre um JSON limpo, evitando o erro "Unexpected token"
+    return NextResponse.json({ error: err.message || "Erro na IA ao processar o PDF." }, { status: 500 });
   }
 }
