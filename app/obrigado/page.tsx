@@ -63,12 +63,28 @@ function ConteudoObrigado() {
 
         {/* Corpo da Página */}
         <div className="p-6 sm:p-10">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h2 className="text-lg font-bold text-slate-800 flex items-center justify-center gap-2">
               <Sparkles className="w-5 h-5 text-amber-500" />
               Siga os passos para ativar sua conta:
             </h2>
           </div>
+
+          {/* ============================================================== */}
+          {/* AVISO DO ORDER BUMP (MAPAS MENTAIS) */}
+          {/* ============================================================== */}
+          <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 text-left">
+            <div className="text-2xl mt-0.5">🗺️</div>
+            <div>
+              <h4 className="text-sm font-bold text-amber-900">
+                Adicionou os Mapas Mentais ao pedido?
+              </h4>
+              <p className="text-xs text-amber-700 mt-1 font-medium">
+                O link com a pasta completa no Google Drive acabou de ser enviado para o seu e-mail! Verifique a sua caixa de entrada (ou spam).
+              </p>
+            </div>
+          </div>
+          {/* ============================================================== */}
 
           {/* Passo a Passo */}
           <div className="space-y-6 relative">

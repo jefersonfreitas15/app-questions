@@ -10,10 +10,13 @@ const supabase = createClient(
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ==============================================================
-// ⚠ COLE AQUI OS IDs DOS SEUS PRODUTOS (RETIRADOS DA URL DA KIWIFY)
+// ⚠ COLE AQUI OS IDs DOS SEUS PRODUTOS (RETIRADOS DA URL DA KIWIFY) E O LINK DA PASTA
 // ==============================================================
 const ID_PRODUTO_VITALICIO = "c2414c10-bc54-11f1-bcba-e798de11d8b0"; 
-const ID_PRODUTO_CREDITOS = "e82bc990-c10f-11f1-a884-dd6e9186beaf"; 
+const ID_PRODUTO_CREDITOS = "e82bc990-c10f-11f1-a884-dd6e9186beaf";
+const ID_ORDER_BUMP_MAPAS = "SEU_ID_DO_ORDER_BUMP_AQUI"; // Cole o ID do produto dos Mapas aqui
+
+const LINK_GOOGLE_DRIVE = "COLE_AQUI_O_SEU_LINK_DO_GOOGLE_DRIVE"; // Cole o link da pasta aqui
 
 export async function POST(request: Request) {
   try {
@@ -80,7 +83,7 @@ export async function POST(request: Request) {
       // 2. Envia e-mail de Recarga
       try {
         await resend.emails.send({
-          from: 'Qpro Concursos <suporte@qproconcursos.tech>', // Altere para o seu e-mail oficial
+          from: 'Qpro Concursos <suporte@qproconcursos.tech>',
           to: [email],
           subject: `⚡ Seus ${quantidadeCreditos} Créditos IA foram liberados!`,
           html: `
@@ -120,6 +123,37 @@ export async function POST(request: Request) {
     }
 
     // =========================================================================
+    // FLUXO 3: VENDA DO ORDER BUMP (MAPAS MENTAIS)
+    // =========================================================================
+    if (productId === ID_ORDER_BUMP_MAPAS) {
+      try {
+        await resend.emails.send({
+          from: 'Qpro Concursos <suporte@qproconcursos.tech>',
+          to: [email],
+          subject: '🗺️ O seu pacote de Mapas Mentais chegou!',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8fafc;">
+              <h1 style="color: #4f46e5; text-align: center;">Aqui estão os seus Mapas!</h1>
+              <p style="color: #475569; font-size: 16px;">Olá, <strong>${nome}</strong>! Obrigado por adicionar os Mapas Mentais à sua encomenda.</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${LINK_GOOGLE_DRIVE}" target="_blank" style="background-color: #4f46e5; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+                  Acessar Pasta Completa
+                </a>
+              </div>
+              
+              <p style="color: #64748b; font-size: 14px; text-align: center;">Recomendamos que guarde este link ou faça o download dos ficheiros para o seu computador.</p>
+            </div>
+          `,
+        });
+      } catch (emailErr) {
+        console.error('Erro ao enviar e-mail do Order Bump:', emailErr);
+      }
+
+      return NextResponse.json({ success: true, type: 'order_bump' });
+    }
+
+    // =========================================================================
     // FLUXO 2: VENDA DO ACESSO VITALÍCIO PADRÃO
     // =========================================================================
     
@@ -146,7 +180,7 @@ export async function POST(request: Request) {
     // 2. Envia o e-mail com o código
     try {
       await resend.emails.send({
-        from: 'Qpro Concursos <suporte@qproconcursos.tech>', // Altere para o seu e-mail oficial
+        from: 'Qpro Concursos <suporte@qproconcursos.tech>',
         to: [email],
         subject: '👑 Seu Acesso Vitalício ao Qpro Concursos foi liberado!',
         html: `
