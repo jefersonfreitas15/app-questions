@@ -1831,22 +1831,52 @@ export function BotaoNovaQuestao() {
               <div className="space-y-4">
                 <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
                   <h4 className="text-sm font-bold text-slate-800 mb-2">Seus créditos acabaram?</h4>
-                  <p className="text-xs text-slate-600 mb-4">Adquira um Pack Turbo para continuar a gerar simulados inéditos e foque na sua aprovação.</p>
-                  <a 
-                    href={LINK_COMPRAR_CREDITOS_IA} 
-                    target="_blank" rel="noopener noreferrer"
-                    className="block w-full py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 transition-all active:scale-95"
-                  >
-                    🛒 Ver Planos de Créditos
-                  </a>
+                  <p className="text-xs text-slate-600 mb-2">Escolha o pacote ideal para continuar a gerar simulados inéditos e focar na sua aprovação.</p>
+                  
+                  <div className="flex flex-col gap-2 mt-3">
+                    <a 
+                      href="https://pay.kiwify.com.br/pO9bvnh" 
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center justify-between px-4 py-2.5 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/50 transition-all active:scale-95"
+                    >
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-slate-800">Pack Turbo (100 Questões)</p>
+                      </div>
+                      <span className="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">R$ 19,90</span>
+                    </a>
+
+                    <a 
+                      href="https://pay.kiwify.com.br/ucNASij" 
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center justify-between px-4 py-2.5 bg-indigo-600 border border-indigo-600 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-md shadow-indigo-200"
+                    >
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-white">Pack Avançado (300 Questões)</p>
+                        <p className="text-[10px] text-indigo-200 font-medium">+ Mais Popular</p>
+                      </div>
+                      <span className="text-xs font-extrabold text-indigo-900 bg-white px-2 py-1 rounded-lg">R$ 37,00</span>
+                    </a>
+
+                    <a 
+                      href="https://pay.kiwify.com.br/rAugTp1" 
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border border-slate-900 rounded-xl hover:bg-slate-800 transition-all active:scale-95"
+                    >
+                      <div className="text-left">
+                        <p className="text-xs font-bold text-white">Pack Elite (1.000 Questões)</p>
+                        <p className="text-[10px] text-slate-400 font-medium">Custo-benefício máximo</p>
+                      </div>
+                      <span className="text-xs font-extrabold text-slate-900 bg-amber-400 px-2 py-1 rounded-lg">R$ 89,90</span>
+                    </a>
+                  </div>
                 </div>
 
                 <form onSubmit={handleAtivarCreditos} className="mt-4 pt-4 border-t border-slate-100">
-                  <label className="block text-xs font-bold uppercase mb-1.5">Já comprou? Digite o código:</label>
+                  <label className="block text-xs font-bold uppercase mb-1.5">Já comprou? Digite o código recebido:</label>
                   {erroCredito && <div className="p-2 mb-2 bg-rose-50 text-rose-700 text-xs font-semibold rounded-lg">{erroCredito}</div>}
                   <div className="flex gap-2">
                     <input 
-                      type="text" required placeholder="Ex: PACK100-QPRO" value={codigoCredito} onChange={(e) => {setCodigoCredito(e.target.value); setErroCredito('');}}
+                      type="text" required placeholder="Ex: CRED100-XYZ" value={codigoCredito} onChange={(e) => {setCodigoCredito(e.target.value); setErroCredito('');}}
                       className="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold uppercase outline-none focus:border-indigo-500"
                     />
                     <button type="submit" disabled={loadingAtivacao} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold disabled:opacity-50 hover:bg-indigo-500 transition-all">
