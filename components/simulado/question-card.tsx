@@ -8,7 +8,7 @@ import { Upload, Loader2 } from 'lucide-react';
 // CONFIGURAÇÕES COMERCIAIS (VENDA & ATIVAÇÃO)
 // ==========================================
 const LINK_CHECKOUT_PAGAMENTO = "https://pay.kiwify.com.br/VE1GbyL";
-const LINK_COMPRAR_CREDITOS_IA = "https://pay.kiwify.com.br/SEU_LINK_DE_CREDITOS_AQUI"; // Atualize depois
+const LINK_COMPRAR_CREDITOS_IA = "https://kiwify.app/D7QD8Qc"; // Atualize depois
 const LIMITE_QUESTOES_GRATIS = 5;
 const CODIGOS_ATIVACAO_VITALICIO = ["QPRO47", "VITALICIO", "QPRO2026", "APROVADO"];
 
