@@ -14,9 +14,9 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 // ==============================================================
 const ID_PRODUTO_VITALICIO = "c2414c10-bc54-11f1-bcba-e798de11d8b0"; 
 const ID_PRODUTO_CREDITOS = "e82bc990-c10f-11f1-a884-dd6e9186beaf";
-const ID_ORDER_BUMP_MAPAS = "SEU_ID_DO_ORDER_BUMP_AQUI"; // Cole o ID do produto dos Mapas aqui
+const ID_ORDER_BUMP_MAPAS = "4956db20-bed0-11f1-a201-45f9f5ba0c3c"; // Cole o ID do produto dos Mapas aqui
 
-const LINK_GOOGLE_DRIVE = "COLE_AQUI_O_SEU_LINK_DO_GOOGLE_DRIVE"; // Cole o link da pasta aqui
+const LINK_GOOGLE_DRIVE = "https://drive.google.com/drive/folders/1yB0pL8gFEAoxCPBuhp0Qun8-fDj4wXQ-?usp=drive_link"; // Cole o link da pasta aqui
 
 export async function POST(request: Request) {
   try {
@@ -156,68 +156,76 @@ export async function POST(request: Request) {
     // =========================================================================
     // FLUXO 2: VENDA DO ACESSO VITALÍCIO PADRÃO
     // =========================================================================
-    
-    // Gera um código de ativação único
-    const randomCode = 'QPRO-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    if (productId === ID_PRODUTO_VITALICIO) {
+      
+      // Gera um código de ativação único
+      const randomCode = 'QPRO-' + Math.random().toString(36).substring(2, 10).toUpperCase();
 
-    // 1. Grava na base de dados Supabase
-    const { error: dbError } = await supabase
-      .from('activation_codes')
-      .insert([
-        {
-          code: randomCode,
-          email: email,
-          transaction_id: String(transactionId),
-          is_used: false,
-        }
-      ]);
+      // 1. Grava na base de dados Supabase
+      const { error: dbError } = await supabase
+        .from('activation_codes')
+        .insert([
+          {
+            code: randomCode,
+            email: email,
+            transaction_id: String(transactionId),
+            is_used: false,
+          }
+        ]);
 
-    if (dbError) {
-      console.error('ERRO AO GRAVAR VITALÍCIO NO SUPABASE:', dbError);
-      return NextResponse.json({ error: dbError.message }, { status: 500 });
-    }
+      if (dbError) {
+        console.error('ERRO AO GRAVAR VITALÍCIO NO SUPABASE:', dbError);
+        return NextResponse.json({ error: dbError.message }, { status: 500 });
+      }
 
-    // 2. Envia o e-mail com o código
-    try {
-      await resend.emails.send({
-        from: 'Qpro Concursos <suporte@qproconcursos.tech>',
-        to: [email],
-        subject: '👑 Seu Acesso Vitalício ao Qpro Concursos foi liberado!',
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8fafc;">
-            <div style="text-align: center; padding-bottom: 20px;">
-              <h1 style="color: #4f46e5; margin: 0;">Pagamento Aprovado!</h1>
-              <p style="color: #64748b; font-size: 16px;">Olá, <strong>${nome}</strong>! O seu acesso vitalício ao Qpro Concursos está pronto.</p>
-            </div>
-            
-            <div style="background: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #cbd5e1; text-align: center; margin: 20px 0;">
-              <p style="color: #475569; font-size: 14px; margin-top: 0;">O seu Código de Ativação exclusivo é:</p>
-              <div style="font-size: 28px; font-weight: 900; color: #4f46e5; letter-spacing: 2px; padding: 10px; background: #e0e7ff; border-radius: 6px; display: inline-block;">
-                ${randomCode}
+      // 2. Envia o e-mail com o código
+      try {
+        await resend.emails.send({
+          from: 'Qpro Concursos <suporte@qproconcursos.tech>',
+          to: [email],
+          subject: '👑 Seu Acesso Vitalício ao Qpro Concursos foi liberado!',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8fafc;">
+              <div style="text-align: center; padding-bottom: 20px;">
+                <h1 style="color: #4f46e5; margin: 0;">Pagamento Aprovado!</h1>
+                <p style="color: #64748b; font-size: 16px;">Olá, <strong>${nome}</strong>! O seu acesso vitalício ao Qpro Concursos está pronto.</p>
+              </div>
+              
+              <div style="background: #ffffff; padding: 24px; border-radius: 8px; border: 1px solid #cbd5e1; text-align: center; margin: 20px 0;">
+                <p style="color: #475569; font-size: 14px; margin-top: 0;">O seu Código de Ativação exclusivo é:</p>
+                <div style="font-size: 28px; font-weight: 900; color: #4f46e5; letter-spacing: 2px; padding: 10px; background: #e0e7ff; border-radius: 6px; display: inline-block;">
+                  ${randomCode}
+                </div>
+              </div>
+
+              <div style="padding-top: 10px; color: #334155; font-size: 14px; line-height: 1.5;">
+                <p><strong>Como ativar:</strong></p>
+                <ol style="padding-left: 20px; margin: 0;">
+                  <li>Abra o aplicativo do Qpro Concursos.</li>
+                  <li>Clique no botão verde de liberar acesso vitalício.</li>
+                  <li>Selecione a aba <strong>"Já comprei! Ativar"</strong> e cole o código acima.</li>
+                </ol>
+              </div>
+
+              <div style="text-align: center; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; color: #94a3b8; font-size: 12px;">
+                <p>Se tiver alguma dúvida, responda a este e-mail. Bons estudos!</p>
               </div>
             </div>
+          `,
+        });
+        console.log('E-mail enviado com sucesso para:', email);
+      } catch (emailErr) {
+        console.error('Erro ao enviar e-mail via Resend:', emailErr);
+      }
 
-            <div style="padding-top: 10px; color: #334155; font-size: 14px; line-height: 1.5;">
-              <p><strong>Como ativar:</strong></p>
-              <ol style="padding-left: 20px; margin: 0;">
-                <li>Abra o aplicativo do Qpro Concursos.</li>
-                <li>Clique no botão verde de liberar acesso vitalício.</li>
-                <li>Selecione a aba <strong>"Já comprei! Ativar"</strong> e cole o código acima.</li>
-              </ol>
-            </div>
-
-            <div style="text-align: center; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; color: #94a3b8; font-size: 12px;">
-              <p>Se tiver alguma dúvida, responda a este e-mail. Bons estudos!</p>
-            </div>
-          </div>
-        `,
-      });
-      console.log('E-mail enviado com sucesso para:', email);
-    } catch (emailErr) {
-      console.error('Erro ao enviar e-mail via Resend:', emailErr);
+      return NextResponse.json({ success: true, code: randomCode, type: 'lifetime' });
     }
 
-    return NextResponse.json({ success: true, code: randomCode, type: 'lifetime' });
+    // =========================================================================
+    // FLUXO 4: IGNORAR PRODUTOS DESCONHECIDOS
+    // =========================================================================
+    // Se a Kiwify enviar um ID que não seja o Vitalício, Créditos ou Mapas, apenas ignoramos.
+    return NextResponse.json({ message: 'Produto não monitorizado pelo webhook.' }, { status: 200 });
 
   } catch (err: any) {
     console.error('ERRO INTERNO NO WEBHOOK:', err);
