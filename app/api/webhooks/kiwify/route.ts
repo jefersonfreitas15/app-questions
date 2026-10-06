@@ -16,7 +16,7 @@ const ID_PRODUTO_VITALICIO = "c2414c10-bc54-11f1-bcba-e798de11d8b0";
 const ID_PRODUTO_CREDITOS = "e82bc990-c10f-11f1-a884-dd6e9186beaf";
 const ID_ORDER_BUMP_MAPAS = "4956db20-bed0-11f1-a201-45f9f5ba0c3c"; // ID capturado no seu teste
 
-const LINK_GOOGLE_DRIVE = "COLE_AQUI_O_SEU_LINK_DO_GOOGLE_DRIVE"; // Cole o link da pasta do Drive aqui
+const LINK_GOOGLE_DRIVE = "https://drive.google.com/drive/folders/1yB0pL8gFEAoxCPBuhp0Qun8-fDj4wXQ-?usp=drive_link"; // Cole o link da pasta do Drive aqui
 
 export async function POST(request: Request) {
   try {
