@@ -10,13 +10,13 @@ const supabase = createClient(
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ==============================================================
-// ⚠ COLE AQUI OS IDs DOS SEUS PRODUTOS (RETIRADOS DA URL DA KIWIFY) E O LINK DA PASTA
+// IDs REAIS DOS PRODUTOS (EXTRAÍDOS DA KIWIFY) E LINK DA PASTA
 // ==============================================================
 const ID_PRODUTO_VITALICIO = "c2414c10-bc54-11f1-bcba-e798de11d8b0"; 
 const ID_PRODUTO_CREDITOS = "e82bc990-c10f-11f1-a884-dd6e9186beaf";
-const ID_ORDER_BUMP_MAPAS = "4956db20-bed0-11f1-a201-45f9f5ba0c3c"; // Cole o ID do produto dos Mapas aqui
+const ID_ORDER_BUMP_MAPAS = "4956db20-bed0-11f1-a201-45f9f5ba0c3c"; // ID capturado no seu teste
 
-const LINK_GOOGLE_DRIVE = "https://drive.google.com/drive/folders/1yB0pL8gFEAoxCPBuhp0Qun8-fDj4wXQ-?usp=drive_link"; // Cole o link da pasta aqui
+const LINK_GOOGLE_DRIVE = "COLE_AQUI_O_SEU_LINK_DO_GOOGLE_DRIVE"; // Cole o link da pasta do Drive aqui
 
 export async function POST(request: Request) {
   try {
@@ -31,39 +31,43 @@ export async function POST(request: Request) {
     const body = await request.json();
     console.log('WEBHOOK KIWIFY RECEBIDO:', JSON.stringify(body, null, 2));
 
-    // A Kiwify só envia eventos para os webhooks se o status mudar. Queremos apenas "approved".
-    const orderStatus = body?.order_status || body?.status;
+    // A Kiwify envia os dados principais dentro de 'body.order' ou na raiz
+    const order = body?.order || body;
+
+    const orderStatus = order?.order_status || order?.status;
     if (orderStatus && orderStatus !== 'approved' && orderStatus !== 'paid') {
       return NextResponse.json({ message: 'Ignorando status diferente de approved.' }, { status: 200 });
     }
 
-    // Extrai os dados essenciais da compra
-    const email = body?.customer?.email || body?.Customer?.email || body?.email;
-    const nome = body?.customer?.full_name || body?.Customer?.full_name || body?.name || 'Concurseiro(a)';
-    const transactionId = body?.order_id || body?.id || 'TRANSACAO_' + Date.now();
+    // Extrai os dados essenciais da compra considerando a estrutura da Kiwify
+    const customer = order?.Customer || order?.customer || {};
+    const email = customer?.email || order?.email;
+    const nome = customer?.full_name || customer?.first_name || order?.name || 'Concurseiro(a)';
+    const transactionId = order?.order_id || order?.id || 'TRANSACAO_' + Date.now();
     
     // Identifica o Produto e o Valor Pago
-    const productId = body?.product?.id || body?.product_id;
-    const amountPaid = Number(body?.Payment?.amount || body?.amount || 0);
+    const productObj = order?.Product || order?.product || {};
+    const productId = productObj?.product_id || productObj?.id || order?.product_id;
+    
+    const commissionsObj = order?.Commissions || {};
+    const amountPaid = Number(commissionsObj?.charge_amount || order?.Payment?.amount || order?.amount || 0) / 100; // Kiwify manda em centavos às vezes
 
     if (!email) {
       return NextResponse.json({ error: 'E-mail do cliente não encontrado no payload' }, { status: 400 });
     }
 
+    console.log(`Processando produto ID: ${productId} para o e-mail: ${email}`);
+
     // =========================================================================
     // FLUXO 1: VENDA DE PACOTE DE CRÉDITOS IA (UPSELL)
     // =========================================================================
     if (productId === ID_PRODUTO_CREDITOS) {
-      
-      // Lógica matemática para descobrir qual pacote o cliente comprou pelo valor pago
-      let quantidadeCreditos = 100; // Padrão (R$ 19,90)
+      let quantidadeCreditos = 100; 
       if (amountPaid === 37.00 || amountPaid === 37) quantidadeCreditos = 300;
       else if (amountPaid === 89.90 || amountPaid === 89.9) quantidadeCreditos = 1000;
 
-      // Gera um código de ativação específico para créditos
       const randomCode = 'CRED' + quantidadeCreditos + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
 
-      // 1. Grava na nova tabela de créditos do Supabase
       const { error: dbError } = await supabase
         .from('codigos_creditos')
         .insert([
@@ -80,7 +84,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: dbError.message }, { status: 500 });
       }
 
-      // 2. Envia e-mail de Recarga
       try {
         await resend.emails.send({
           from: 'Qpro Concursos <suporte@qproconcursos.tech>',
@@ -134,7 +137,7 @@ export async function POST(request: Request) {
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8fafc;">
               <h1 style="color: #4f46e5; text-align: center;">Aqui estão os seus Mapas!</h1>
-              <p style="color: #475569; font-size: 16px;">Olá, <strong>${nome}</strong>! Obrigado por adicionar os Mapas Mentais à sua encomenda.</p>
+              <p style="color: #475569; font-size: 16px;">Olá, <strong>${nome}</strong>! Obrigado por adquirir os Mapas Mentais.</p>
               
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${LINK_GOOGLE_DRIVE}" target="_blank" style="background-color: #4f46e5; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
@@ -146,6 +149,7 @@ export async function POST(request: Request) {
             </div>
           `,
         });
+        console.log('E-mail de Mapas Mentais enviado com sucesso para:', email);
       } catch (emailErr) {
         console.error('Erro ao enviar e-mail do Order Bump:', emailErr);
       }
@@ -157,11 +161,8 @@ export async function POST(request: Request) {
     // FLUXO 2: VENDA DO ACESSO VITALÍCIO PADRÃO
     // =========================================================================
     if (productId === ID_PRODUTO_VITALICIO) {
-      
-      // Gera um código de ativação único
       const randomCode = 'QPRO-' + Math.random().toString(36).substring(2, 10).toUpperCase();
 
-      // 1. Grava na base de dados Supabase
       const { error: dbError } = await supabase
         .from('activation_codes')
         .insert([
@@ -178,7 +179,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: dbError.message }, { status: 500 });
       }
 
-      // 2. Envia o e-mail com o código
       try {
         await resend.emails.send({
           from: 'Qpro Concursos <suporte@qproconcursos.tech>',
@@ -224,8 +224,7 @@ export async function POST(request: Request) {
     // =========================================================================
     // FLUXO 4: IGNORAR PRODUTOS DESCONHECIDOS
     // =========================================================================
-    // Se a Kiwify enviar um ID que não seja o Vitalício, Créditos ou Mapas, apenas ignoramos.
-    return NextResponse.json({ message: 'Produto não monitorizado pelo webhook.' }, { status: 200 });
+    return NextResponse.json({ message: 'Produto não monitorizado pelo webhook.', productId }, { status: 200 });
 
   } catch (err: any) {
     console.error('ERRO INTERNO NO WEBHOOK:', err);
