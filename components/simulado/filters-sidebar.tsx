@@ -90,7 +90,7 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
 
     startTransition(() => {
       const qs = params.toString();
-      router.push(qs ? `/app?${qs}` : "/app"); // <-- Agora manda para o aplicativo
+      router.push(qs ? `/app?${qs}` : "/app"); 
     });
   };
 
@@ -103,7 +103,7 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
       assunto: "",
     });
     startTransition(() => {
-      router.push("/app"); // <-- Agora manda para o aplicativo
+      router.push("/app"); 
     });
   };
 
@@ -149,8 +149,8 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
               <Label htmlFor={filter.key} className="text-xs font-semibold text-slate-600">
                 {filter.label}
               </Label>
+              {/* O erro estava na key do Select abaixo. Agora está fixa! */}
               <Select
-                key={`${filter.key}-${selected[filter.key] || "empty"}`}
                 value={selected[filter.key] || undefined}
                 onValueChange={(val) => handleSelectChange(filter.key, val ?? "")}
               >

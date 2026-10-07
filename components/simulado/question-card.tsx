@@ -1314,6 +1314,9 @@ export function BotaoNovaQuestao() {
   const [assuntoIa, setAssuntoIa] = useState('');
   const [qtdIa, setQtdIa] = useState(5);
   const [gerandoIa, setGerandoIa] = useState(false);
+  
+  // NOVO ESTADO: Controla o balão de sucesso
+  const [sucessoIa, setSucessoIa] = useState(false);
 
   const atualizarStatusComercial = () => {
     try {
@@ -1398,7 +1401,6 @@ export function BotaoNovaQuestao() {
     }
   };
 
-  // NOVA FUNÇÃO: ATIVAR PACOTE DE CRÉDITOS VIA API
   const handleAtivarCreditos = async (e: React.FormEvent) => {
     e.preventDefault();
     const limpo = codigoCredito.trim().toUpperCase();
@@ -1442,6 +1444,7 @@ export function BotaoNovaQuestao() {
       setModalVitalicioAberto(true);
       return;
     }
+    setSucessoIa(false);
     setModalIaAberto(true);
     setAbaAtivaIa('gerar');
   };
@@ -1460,7 +1463,6 @@ export function BotaoNovaQuestao() {
 
     const quantidadeSegura = Math.min(Math.max(Number(qtdIa) || 5, 1), 5);
 
-    // VALIDAÇÃO DE CRÉDITOS IA COM O NOVO LIMITE
     if (iaUsadas + quantidadeSegura > limiteIaTotal) {
       alert(`⚠️ Saldo Insuficiente!\n\nVocê tem limite para gerar ${limiteIaTotal} questões e já gerou ${iaUsadas}.\n\nAdquira um Pacote de Créditos para continuar.`);
       setAbaAtivaIa('comprar');
@@ -1524,14 +1526,20 @@ export function BotaoNovaQuestao() {
         }
       }
 
-      // SUCESSO: DESCONTA OS CRÉDITOS
+      // SUCESSO: DESCONTA OS CRÉDITOS E ATIVA O BALÃO DE SUCESSO
       const novoTotal = iaUsadas + quantidadeSegura;
       localStorage.setItem('qpro_ia_usadas', String(novoTotal));
       setIaUsadas(novoTotal);
 
-      setModalIaAberto(false);
-      setAssuntoIa('');
-      window.location.href = `/app?disciplina=${encodeURIComponent(disciplinaFinal)}`;
+      setSucessoIa(true); // <--- Ativa o ecrã de sucesso
+      
+      // Aguarda 3 segundos para o utilizador ler a mensagem antes de redirecionar
+      setTimeout(() => {
+        setModalIaAberto(false);
+        setAssuntoIa('');
+        setSucessoIa(false);
+        window.location.href = `/app?disciplina=${encodeURIComponent(disciplinaFinal)}`;
+      }, 3000);
       
     } catch (err: any) {
       alert('Erro grave no sistema: ' + (err.message || 'Verifique a conexão.'));
@@ -1809,195 +1817,209 @@ export function BotaoNovaQuestao() {
               </button>
             </div>
 
-            {/* PAINEL DE CRÉDITOS IA E ABAS DE COMPRA */}
-            <div className="mb-5 flex flex-col gap-3">
-              <div className="flex items-center justify-between bg-indigo-50 border border-indigo-100 p-3 rounded-xl">
-                <div>
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-500">Seu Saldo de Créditos</span>
-                  <div className="text-sm font-bold text-indigo-900 mt-0.5">
-                    {limiteIaTotal - iaUsadas} Disponíveis <span className="text-[10px] font-normal text-indigo-400">({iaUsadas}/{limiteIaTotal} usadas)</span>
-                  </div>
+            {/* PAINEL DE SUCESSO */}
+            {sucessoIa ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center animate-in fade-in zoom-in duration-300">
+                <div className="w-16 h-16 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-sm text-4xl">
+                  ✨
                 </div>
-                <button 
-                  onClick={() => setAbaAtivaIa(abaAtivaIa === 'comprar' ? 'gerar' : 'comprar')}
-                  className="bg-amber-400 hover:bg-amber-500 text-amber-950 px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase shadow-sm transition-all active:scale-95"
-                >
-                  {abaAtivaIa === 'comprar' ? 'Voltar' : '+ Créditos'}
-                </button>
-              </div>
-            </div>
-
-            {abaAtivaIa === 'comprar' ? (
-              <div className="space-y-4">
-                <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
-                  <h4 className="text-sm font-bold text-slate-800 mb-2">Seus créditos acabaram?</h4>
-                  <p className="text-xs text-slate-600 mb-2">Escolha o pacote ideal para continuar a gerar simulados inéditos e focar na sua aprovação.</p>
-                  
-                  <div className="flex flex-col gap-2 mt-3">
-                    <a 
-                      href="https://pay.kiwify.com.br/pO9bvnh" 
-                      target="_blank" rel="noopener noreferrer"
-                      className="flex items-center justify-between px-4 py-2.5 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/50 transition-all active:scale-95"
-                    >
-                      <div className="text-left">
-                        <p className="text-xs font-bold text-slate-800">Pack Turbo (100 Questões)</p>
-                      </div>
-                      <span className="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">R$ 19,90</span>
-                    </a>
-
-                    <a 
-                      href="https://pay.kiwify.com.br/ucNASij" 
-                      target="_blank" rel="noopener noreferrer"
-                      className="flex items-center justify-between px-4 py-2.5 bg-indigo-600 border border-indigo-600 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-md shadow-indigo-200"
-                    >
-                      <div className="text-left">
-                        <p className="text-xs font-bold text-white">Pack Avançado (300 Questões)</p>
-                        <p className="text-[10px] text-indigo-200 font-medium">+ Mais Popular</p>
-                      </div>
-                      <span className="text-xs font-extrabold text-indigo-900 bg-white px-2 py-1 rounded-lg">R$ 37,00</span>
-                    </a>
-
-                    <a 
-                      href="https://pay.kiwify.com.br/rAugTp1" 
-                      target="_blank" rel="noopener noreferrer"
-                      className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border border-slate-900 rounded-xl hover:bg-slate-800 transition-all active:scale-95"
-                    >
-                      <div className="text-left">
-                        <p className="text-xs font-bold text-white">Pack Elite (1.000 Questões)</p>
-                        <p className="text-[10px] text-slate-400 font-medium">Custo-benefício máximo</p>
-                      </div>
-                      <span className="text-xs font-extrabold text-slate-900 bg-amber-400 px-2 py-1 rounded-lg">R$ 89,90</span>
-                    </a>
-                  </div>
-                </div>
-
-                <form onSubmit={handleAtivarCreditos} className="mt-4 pt-4 border-t border-slate-100">
-                  <label className="block text-xs font-bold uppercase mb-1.5">Já comprou? Digite o código recebido:</label>
-                  {erroCredito && <div className="p-2 mb-2 bg-rose-50 text-rose-700 text-xs font-semibold rounded-lg">{erroCredito}</div>}
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" required placeholder="Ex: CRED100-XYZ" value={codigoCredito} onChange={(e) => {setCodigoCredito(e.target.value); setErroCredito('');}}
-                      className="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold uppercase outline-none focus:border-indigo-500"
-                    />
-                    <button type="submit" disabled={loadingAtivacao} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold disabled:opacity-50 hover:bg-indigo-500 transition-all">
-                      {loadingAtivacao ? 'Validando...' : 'Ativar'}
-                    </button>
-                  </div>
-                </form>
+                <h3 className="text-xl font-extrabold text-emerald-600 mb-1">Questão gerada com sucesso!</h3>
+                <p className="text-sm font-medium text-slate-600 mb-2">As questões foram guardadas no banco.</p>
+                <p className="text-xs text-slate-400">A redirecionar para o seu caderno de estudos...</p>
               </div>
             ) : (
-              <form onSubmit={handleGerarQuestoesUsuarioIA} className="flex flex-col gap-4">
-                <div>
-                  <label
-                    style={{ color: '#334155' }}
-                    className="block text-xs font-bold uppercase tracking-wide mb-1.5"
-                  >
-                    Disciplina *
-                  </label>
-                  <select
-                    value={discIaSelecionada}
-                    onChange={(e) => setDiscIaSelecionada(e.target.value)}
-                    style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500"
-                  >
-                    {disciplinasBanco.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                    <option value="__outra__">+ Outra disciplina específica...</option>
-                  </select>
-                </div>
-
-                {discIaSelecionada === '__outra__' && (
-                  <div>
-                    <label
-                      style={{ color: '#334155' }}
-                      className="block text-xs font-bold uppercase tracking-wide mb-1.5"
+              <>
+                {/* PAINEL DE CRÉDITOS IA E ABAS DE COMPRA */}
+                <div className="mb-5 flex flex-col gap-3">
+                  <div className="flex items-center justify-between bg-indigo-50 border border-indigo-100 p-3 rounded-xl">
+                    <div>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-500">Seu Saldo de Créditos</span>
+                      <div className="text-sm font-bold text-indigo-900 mt-0.5">
+                        {limiteIaTotal - iaUsadas} Disponíveis <span className="text-[10px] font-normal text-indigo-400">({iaUsadas}/{limiteIaTotal} usadas)</span>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => setAbaAtivaIa(abaAtivaIa === 'comprar' ? 'gerar' : 'comprar')}
+                      className="bg-amber-400 hover:bg-amber-500 text-amber-950 px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase shadow-sm transition-all active:scale-95"
                     >
-                      Digite a Disciplina *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ex: Legislação Municipal, Engenharia Civil..."
-                      value={discIaCustom}
-                      onChange={(e) => setDiscIaCustom(e.target.value)}
-                      style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500"
-                    />
+                      {abaAtivaIa === 'comprar' ? 'Voltar' : '+ Créditos'}
+                    </button>
                   </div>
-                )}
-
-                <div>
-                  <label
-                    style={{ color: '#334155' }}
-                    className="block text-xs font-bold uppercase tracking-wide mb-1.5"
-                  >
-                    Assunto Específico <span className="font-normal opacity-70">(opcional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Licitações, Poderes Administrativos, LRF..."
-                    value={assuntoIa}
-                    onChange={(e) => setAssuntoIa(e.target.value)}
-                    style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500"
-                  />
                 </div>
 
-                <div>
-                  <label
-                    style={{ color: '#334155' }}
-                    className="block text-xs font-bold uppercase tracking-wide mb-1.5"
-                  >
-                    Quantidade de Questões (Máx. 5)
-                  </label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {[1, 2, 3, 4, 5].map((num) => {
-                      const ativo = qtdIa === num;
-                      return (
-                        <button
-                          key={num}
-                          type="button"
-                          onClick={() => setQtdIa(num)}
-                          disabled={esgotouCreditos}
-                          style={
-                            ativo
-                              ? { backgroundColor: '#4F46E5', color: '#FFFFFF', borderColor: '#4F46E5' }
-                              : { backgroundColor: '#F8FAFC', color: '#334155', borderColor: '#E2E8F0' }
-                          }
-                          className="py-2 rounded-xl border text-xs font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                {abaAtivaIa === 'comprar' ? (
+                  <div className="space-y-4">
+                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
+                      <h4 className="text-sm font-bold text-slate-800 mb-2">Seus créditos acabaram?</h4>
+                      <p className="text-xs text-slate-600 mb-2">Escolha o pacote ideal para continuar a gerar simulados inéditos e focar na sua aprovação.</p>
+                      
+                      <div className="flex flex-col gap-2 mt-3">
+                        <a 
+                          href="https://pay.kiwify.com.br/pO9bvnh" 
+                          target="_blank" rel="noopener noreferrer"
+                          className="flex items-center justify-between px-4 py-2.5 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/50 transition-all active:scale-95"
                         >
-                          {num} {num === 1 ? 'questão' : 'questões'}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-slate-800">Pack Turbo (100 Questões)</p>
+                          </div>
+                          <span className="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">R$ 19,90</span>
+                        </a>
 
-                <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 mt-1">
-                  <button
-                    type="button"
-                    onClick={() => setModalIaAberto(false)}
-                    style={{ backgroundColor: '#F8FAFC', color: '#475569' }}
-                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold hover:opacity-90"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={gerandoIa || esgotouCreditos}
-                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50 shadow-sm shadow-indigo-200"
-                  >
-                    {gerandoIa
-                      ? `⏳ Gerando...`
-                      : esgotouCreditos 
-                      ? `Limite Atingido`
-                      : `✨ Gerar ${qtdIa}`}
-                  </button>
-                </div>
-              </form>
+                        <a 
+                          href="https://pay.kiwify.com.br/ucNASij" 
+                          target="_blank" rel="noopener noreferrer"
+                          className="flex items-center justify-between px-4 py-2.5 bg-indigo-600 border border-indigo-600 rounded-xl hover:bg-indigo-500 transition-all active:scale-95 shadow-md shadow-indigo-200"
+                        >
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-white">Pack Avançado (300 Questões)</p>
+                            <p className="text-[10px] text-indigo-200 font-medium">+ Mais Popular</p>
+                          </div>
+                          <span className="text-xs font-extrabold text-indigo-900 bg-white px-2 py-1 rounded-lg">R$ 37,00</span>
+                        </a>
+
+                        <a 
+                          href="https://pay.kiwify.com.br/rAugTp1" 
+                          target="_blank" rel="noopener noreferrer"
+                          className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border border-slate-900 rounded-xl hover:bg-slate-800 transition-all active:scale-95"
+                        >
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-white">Pack Elite (1.000 Questões)</p>
+                            <p className="text-[10px] text-slate-400 font-medium">Custo-benefício máximo</p>
+                          </div>
+                          <span className="text-xs font-extrabold text-slate-900 bg-amber-400 px-2 py-1 rounded-lg">R$ 89,90</span>
+                        </a>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handleAtivarCreditos} className="mt-4 pt-4 border-t border-slate-100">
+                      <label className="block text-xs font-bold uppercase mb-1.5">Já comprou? Digite o código recebido:</label>
+                      {erroCredito && <div className="p-2 mb-2 bg-rose-50 text-rose-700 text-xs font-semibold rounded-lg">{erroCredito}</div>}
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" required placeholder="Ex: CRED100-XYZ" value={codigoCredito} onChange={(e) => {setCodigoCredito(e.target.value); setErroCredito('');}}
+                          className="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold uppercase outline-none focus:border-indigo-500"
+                        />
+                        <button type="submit" disabled={loadingAtivacao} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold disabled:opacity-50 hover:bg-indigo-500 transition-all">
+                          {loadingAtivacao ? 'Validando...' : 'Ativar'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                ) : (
+                  <form onSubmit={handleGerarQuestoesUsuarioIA} className="flex flex-col gap-4">
+                    <div>
+                      <label
+                        style={{ color: '#334155' }}
+                        className="block text-xs font-bold uppercase tracking-wide mb-1.5"
+                      >
+                        Disciplina *
+                      </label>
+                      <select
+                        value={discIaSelecionada}
+                        onChange={(e) => setDiscIaSelecionada(e.target.value)}
+                        style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}
+                        className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500"
+                      >
+                        {disciplinasBanco.map((d) => (
+                          <option key={d} value={d}>
+                            {d}
+                          </option>
+                        ))}
+                        <option value="__outra__">+ Outra disciplina específica...</option>
+                      </select>
+                    </div>
+
+                    {discIaSelecionada === '__outra__' && (
+                      <div>
+                        <label
+                          style={{ color: '#334155' }}
+                          className="block text-xs font-bold uppercase tracking-wide mb-1.5"
+                        >
+                          Digite a Disciplina *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Ex: Legislação Municipal, Engenharia Civil..."
+                          value={discIaCustom}
+                          onChange={(e) => setDiscIaCustom(e.target.value)}
+                          style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label
+                        style={{ color: '#334155' }}
+                        className="block text-xs font-bold uppercase tracking-wide mb-1.5"
+                      >
+                        Assunto Específico <span className="font-normal opacity-70">(opcional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ex: Licitações, Poderes Administrativos, LRF..."
+                        value={assuntoIa}
+                        onChange={(e) => setAssuntoIa(e.target.value)}
+                        style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        style={{ color: '#334155' }}
+                        className="block text-xs font-bold uppercase tracking-wide mb-1.5"
+                      >
+                        Quantidade de Questões (Máx. 5)
+                      </label>
+                      <div className="grid grid-cols-5 gap-2">
+                        {[1, 2, 3, 4, 5].map((num) => {
+                          const ativo = qtdIa === num;
+                          return (
+                            <button
+                              key={num}
+                              type="button"
+                              onClick={() => setQtdIa(num)}
+                              disabled={esgotouCreditos}
+                              style={
+                                ativo
+                                  ? { backgroundColor: '#4F46E5', color: '#FFFFFF', borderColor: '#4F46E5' }
+                                  : { backgroundColor: '#F8FAFC', color: '#334155', borderColor: '#E2E8F0' }
+                              }
+                              className="py-2 rounded-xl border text-xs font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {num} {num === 1 ? 'questão' : 'questões'}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 mt-1">
+                      <button
+                        type="button"
+                        onClick={() => setModalIaAberto(false)}
+                        style={{ backgroundColor: '#F8FAFC', color: '#475569' }}
+                        className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold hover:opacity-90"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={gerandoIa || esgotouCreditos}
+                        className="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold hover:from-indigo-500 hover:to-violet-500 disabled:opacity-50 shadow-sm shadow-indigo-200"
+                      >
+                        {gerandoIa
+                          ? `⏳ Gerando...`
+                          : esgotouCreditos 
+                          ? `Limite Atingido`
+                          : `✨ Gerar ${qtdIa}`}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </>
             )}
           </div>
         </div>
