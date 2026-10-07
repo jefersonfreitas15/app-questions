@@ -36,6 +36,18 @@ function ConteudoObrigado() {
     }
 
     buscarCodigo();
+
+    // ==============================================================
+    // DISPARO DO PIXEL DE COMPRA DA META
+    // ==============================================================
+    if (typeof window !== "undefined" && (window as any).fbq) {
+      (window as any).fbq("track", "Purchase", {
+        currency: "BRL",
+        value: 47.00, // Valor padrão do produto principal
+      });
+    }
+    // ==============================================================
+
   }, [emailParam]);
 
   const handleCopiarCodigo = () => {

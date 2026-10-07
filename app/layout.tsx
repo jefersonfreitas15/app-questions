@@ -5,7 +5,7 @@ import './globals.css'
 import { Geist } from "next/font/google"
 import { cn } from "@/lib/utils"
 import { FacebookPixel } from "@/components/pixel"
-import { Suspense } from "react" // <-- ADICIONE ESTA LINHA AQUI
+import { Suspense } from "react"
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
 

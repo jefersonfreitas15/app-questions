@@ -44,6 +44,24 @@ function ObrigadoConteudo() {
             setCodigo(data.codigo);
             setCreditos(data.creditos);
             encontrou = true;
+
+            // ==============================================================
+            // DISPARO DO PIXEL DE COMPRA DINÂMICO (UPSELL)
+            // ==============================================================
+            if (typeof window !== "undefined" && (window as any).fbq) {
+              // Mapeia a quantidade de créditos para o valor pago real
+              let valorPago = 19.90; // Padrão (100 créditos)
+              if (data.creditos === 300) valorPago = 37.00;
+              if (data.creditos >= 1000) valorPago = 89.90;
+
+              (window as any).fbq("track", "Purchase", {
+                currency: "BRL",
+                value: valorPago,
+                content_name: `Pack de ${data.creditos} Créditos IA`,
+              });
+            }
+            // ==============================================================
+
           } else {
             // Espera 2 segundos antes de tentar de novo
             await new Promise(r => setTimeout(r, 2000));
