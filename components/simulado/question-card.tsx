@@ -5,6 +5,30 @@ import { supabase } from '@/lib/supabase';
 import { Upload, Loader2 } from 'lucide-react';
 
 // ==========================================
+// 0. HOOK GLOBAL DE TEMA (SINCRONIZA TODAS AS CORES)
+// ==========================================
+export function useTema() {
+  const [tema, setTema] = useState({ fundo: '', cartao: '', fonte: '' });
+
+  useEffect(() => {
+    const lerTema = () => {
+      try {
+        const salvo = localStorage.getItem("simulado_tema_cores");
+        if (salvo) {
+          setTema(JSON.parse(salvo));
+        }
+      } catch (e) {}
+    };
+
+    lerTema(); // Lê quando o componente nasce
+    window.addEventListener('qpro-tema-alterado', lerTema); // Escuta as mudanças no painel de cores
+    return () => window.removeEventListener('qpro-tema-alterado', lerTema);
+  }, []);
+
+  return tema;
+}
+
+// ==========================================
 // CONFIGURAÇÕES COMERCIAIS (VENDA & ATIVAÇÃO)
 // ==========================================
 const LINK_CHECKOUT_PAGAMENTO = "https://pay.kiwify.com.br/VE1GbyL";
@@ -144,6 +168,7 @@ export function PainelDesempenho({
   initialRespostas?: any[];
   questions?: any[];
 }) {
+  const tema = useTema(); // Sincroniza o painel
   const [respostas, setRespostas] = useState<any[]>(initialRespostas);
   const [mostrarPorDisciplina, setMostrarPorDisciplina] = useState(false);
 
@@ -224,7 +249,7 @@ export function PainelDesempenho({
   return (
     <div className="mb-6">
       <div className="flex flex-wrap justify-between items-center gap-2 mb-2.5">
-        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: tema.fonte || '#64748b', opacity: 0.8 }}>
           📊 Seu progresso acumulado
         </span>
 
@@ -235,8 +260,9 @@ export function PainelDesempenho({
             className={`text-xs font-semibold px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 ${
               mostrarPorDisciplina
                 ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs shadow-indigo-200'
-                : 'bg-white text-indigo-600 border-indigo-200/80 hover:bg-indigo-50/60'
+                : 'border-current hover:opacity-70'
             }`}
+            style={!mostrarPorDisciplina ? { color: tema.fonte || 'inherit', opacity: 0.9 } : undefined}
           >
             <span>📈</span>
             <span>
@@ -248,7 +274,8 @@ export function PainelDesempenho({
             <button
               type="button"
               onClick={zerarPlacar}
-              className="text-xs font-medium text-slate-400 hover:text-rose-500 transition-colors"
+              className="text-xs font-medium hover:text-rose-500 transition-colors"
+              style={{ color: tema.fonte || 'inherit', opacity: 0.6 }}
             >
               Reiniciar estatísticas
             </button>
@@ -257,25 +284,34 @@ export function PainelDesempenho({
       </div>
 
       <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs transition-all hover:-translate-y-0.5">
-          <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wide">
+        <div 
+          className="border border-slate-200/50 rounded-2xl p-4 shadow-xs transition-all hover:-translate-y-0.5"
+          style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || 'inherit' }}
+        >
+          <span className="text-[11px] font-bold text-indigo-500 uppercase tracking-wide">
             Resolvidas
           </span>
           <p className="text-2xl font-extrabold mt-1" style={{ color: 'inherit' }}>
-  {totalRespondidas}
-</p>
+            {totalRespondidas}
+          </p>
         </div>
 
-        <div className="bg-white border border-emerald-200 rounded-2xl p-4 shadow-xs transition-all hover:-translate-y-0.5">
-          <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wide">
+        <div 
+          className="border border-emerald-200/50 rounded-2xl p-4 shadow-xs transition-all hover:-translate-y-0.5"
+          style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || 'inherit' }}
+        >
+          <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-wide">
             Acertos
           </span>
-          <p className="text-2xl font-extrabold text-emerald-600 mt-1">
+          <p className="text-2xl font-extrabold text-emerald-500 mt-1">
             {totalAcertos}
           </p>
         </div>
 
-        <div className="bg-white border border-rose-200 rounded-2xl p-4 shadow-xs transition-all hover:-translate-y-0.5">
+        <div 
+          className="border border-rose-200/50 rounded-2xl p-4 shadow-xs transition-all hover:-translate-y-0.5"
+          style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || 'inherit' }}
+        >
           <span className="text-[11px] font-bold text-rose-500 uppercase tracking-wide">
             Erros
           </span>
@@ -284,16 +320,19 @@ export function PainelDesempenho({
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-xs transition-all hover:-translate-y-0.5 flex flex-col justify-between">
+        <div 
+          className="border border-slate-200/50 rounded-2xl p-4 shadow-xs transition-all hover:-translate-y-0.5 flex flex-col justify-between"
+          style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || 'inherit' }}
+        >
           <div>
-            <span className="text-[11px] font-bold text-violet-600 uppercase tracking-wide">
+            <span className="text-[11px] font-bold text-violet-500 uppercase tracking-wide">
               Aproveitamento
             </span>
             <p className="text-2xl font-extrabold mt-1" style={{ color: 'inherit' }}>
-  {taxaAcerto}%
-</p>
+              {taxaAcerto}%
+            </p>
           </div>
-          <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2">
+          <div className="w-full h-1.5 rounded-full overflow-hidden mt-2" style={{ backgroundColor: tema.fundo || '#F1F5F9' }}>
             <div
               className="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full rounded-full transition-all duration-700 ease-out"
               style={{ width: `${taxaAcerto}%` }}
@@ -303,13 +342,16 @@ export function PainelDesempenho({
       </div>
 
       {mostrarPorDisciplina && (
-        <div className="mt-4 bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs transition-all">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <div 
+          className="mt-4 border border-slate-200/50 rounded-2xl p-5 shadow-xs transition-all"
+          style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || 'inherit' }}
+        >
+          <div className="flex items-center justify-between border-b border-slate-100/20 pb-3 mb-4">
             <div>
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: 'inherit' }}>
                 📚 Raio-X por Disciplina
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs mt-0.5" style={{ color: 'inherit', opacity: 0.7 }}>
                 Acompanhe seus pontos fortes e as matérias que precisam de revisão
               </p>
             </div>
@@ -320,7 +362,7 @@ export function PainelDesempenho({
           </div>
 
           {estatisticasPorDisciplina.length === 0 ? (
-            <div className="text-center py-6 text-slate-400 text-sm">
+            <div className="text-center py-6 text-sm" style={{ color: 'inherit', opacity: 0.6 }}>
               Nenhuma questão respondida ainda. Resolva sua primeira questão abaixo para gerar o gráfico por disciplina!
             </div>
           ) : (
@@ -343,10 +385,11 @@ export function PainelDesempenho({
                 return (
                   <div
                     key={item.disciplina}
-                    className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50 flex flex-col justify-between gap-2"
+                    className="p-3.5 rounded-xl border border-slate-200/30 flex flex-col justify-between gap-2"
+                    style={{ backgroundColor: tema.fundo || '#F8FAFC' }} // Destaca do cartão
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-slate-800 truncate">
+                      <span className="text-xs sm:text-sm font-bold truncate" style={{ color: 'inherit' }}>
                         {item.disciplina}
                       </span>
                       <span
@@ -356,19 +399,19 @@ export function PainelDesempenho({
                       </span>
                     </div>
 
-                    <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-200/50 h-2 rounded-full overflow-hidden">
                       <div
                         className={`${corBarra} h-full rounded-full transition-all duration-500`}
                         style={{ width: `${item.percentual}%` }}
                       />
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px] font-medium text-slate-500 pt-0.5">
+                    <div className="flex items-center justify-between text-[11px] font-medium pt-0.5" style={{ color: 'inherit', opacity: 0.8 }}>
                       <span>
-                        Total: <strong className="text-slate-700">{item.total}</strong>
+                        Total: <strong style={{ color: 'inherit', opacity: 1 }}>{item.total}</strong>
                       </span>
                       <div className="flex items-center gap-3">
-                        <span className="text-emerald-600 font-semibold">
+                        <span className="text-emerald-500 font-semibold">
                           ✓ {item.acertos} {item.acertos === 1 ? 'acerto' : 'acertos'}
                         </span>
                         <span className="text-rose-500 font-semibold">
@@ -396,11 +439,11 @@ export function QuestionCard({
   numeroAtual?: number;
   totalQuestoes?: number;
 }) {
+  const tema = useTema(); // Hook do tema
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [showComment, setShowComment] = useState(false);
   const [entered, setEntered] = useState(false);
-  const [corCartao, setCorCartao] = useState<string | undefined>(undefined);
 
   const [eliminadas, setEliminadas] = useState<Record<string, boolean>>({});
   const [isFavorita, setIsFavorita] = useState(false);
@@ -415,10 +458,6 @@ export function QuestionCard({
     setIsAnswered(false);
     setShowComment(false);
     setEliminadas({});
-    try {
-      const salvo = localStorage.getItem("simulado_tema_cores");
-      if (salvo) setCorCartao(JSON.parse(salvo).cartao);
-    } catch (e) {}
 
     if (question?.id !== undefined) {
       const qId = String(question.id);
@@ -442,8 +481,11 @@ export function QuestionCard({
 
   if (!question) {
     return (
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-10 text-center text-slate-400 shadow-xs">
-        ⏳ Carregando questão...
+      <div 
+        className="border border-slate-200/50 rounded-2xl p-10 text-center shadow-xs"
+        style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || 'inherit' }}
+      >
+        <span style={{ opacity: 0.6 }}>⏳ Carregando questão...</span>
       </div>
     );
   }
@@ -597,7 +639,7 @@ export function QuestionCard({
       className={`border border-slate-200/50 rounded-2xl p-5 sm:p-8 shadow-xs transition-all duration-300 ease-out ${
         entered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
       }`}
-      style={{ backgroundColor: corCartao || 'transparent' }}
+      style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || 'inherit' }}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
         <div className="flex flex-wrap gap-2">
@@ -607,22 +649,22 @@ export function QuestionCard({
             </span>
           )}
           {mostrarBanca && (
-            <span className="bg-indigo-50 border border-indigo-200/60 text-indigo-700 px-3 py-1 rounded-full text-xs font-semibold">
+            <span className="bg-indigo-50/10 border border-indigo-200/60 text-indigo-500 px-3 py-1 rounded-full text-xs font-semibold">
               {question.banca}
             </span>
           )}
           {mostrarAno && (
-            <span className="bg-sky-50 border border-sky-200/60 text-sky-700 px-3 py-1 rounded-full text-xs font-semibold">
+            <span className="bg-sky-50/10 border border-sky-200/60 text-sky-500 px-3 py-1 rounded-full text-xs font-semibold">
               {question.ano}
             </span>
           )}
           {disciplinaExibida && (
-            <span className="bg-violet-50 border border-violet-200/60 text-violet-700 px-3 py-1 rounded-full text-xs font-semibold">
+            <span className="bg-violet-50/10 border border-violet-200/60 text-violet-500 px-3 py-1 rounded-full text-xs font-semibold">
               {disciplinaExibida}
             </span>
           )}
           {mostrarOrgao && (
-            <span className="bg-amber-50 border border-amber-200/60 text-amber-700 px-3 py-1 rounded-full text-xs font-semibold">
+            <span className="bg-amber-50/10 border border-amber-200/60 text-amber-500 px-3 py-1 rounded-full text-xs font-semibold">
               {question.orgao}
             </span>
           )}
@@ -634,9 +676,10 @@ export function QuestionCard({
           title={isFavorita ? 'Remover das Favoritas' : 'Guardar nas Favoritas para revisão'}
           className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border transition-all active:scale-95 ${
             isFavorita
-              ? 'bg-amber-50 border-amber-300 text-amber-700 shadow-2xs'
-              : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-amber-300 hover:text-amber-600'
+              ? 'bg-amber-500/20 border-amber-400 text-amber-500 shadow-2xs'
+              : 'border-current opacity-60 hover:opacity-100 hover:border-amber-400 hover:text-amber-500'
           }`}
+          style={!isFavorita ? { backgroundColor: 'transparent', color: 'inherit' } : undefined}
         >
           <span>{isFavorita ? '⭐' : '☆'}</span>
           <span>{isFavorita ? 'Favorita' : 'Favoritar'}</span>
@@ -644,8 +687,8 @@ export function QuestionCard({
       </div>
 
       <h2 className="text-base sm:text-lg mb-7 leading-relaxed font-medium text-justify" style={{ color: 'inherit' }}>
-  {enunciadoExibido}
-</h2>
+        {enunciadoExibido}
+      </h2>
 
       <div className="flex flex-col gap-3 mb-6">
         {alternativas.map((alt: any, index: number) => {
@@ -657,27 +700,31 @@ export function QuestionCard({
           const textoAlternativa = limparMathML(alt.texto || alt.enunciado || alt.descricao || '');
 
           let containerClasses =
-  'border-slate-200/50 hover:border-indigo-400 hover:-translate-y-0.5 hover:shadow-sm';
+            'border-slate-200/50 hover:border-indigo-400 hover:-translate-y-0.5 hover:shadow-sm';
           let badgeClasses = 'bg-slate-100 text-slate-600 border-slate-200';
+          let textColorStyle = (!isAnswered && !isSelected && !isEliminada) ? { color: 'inherit' } : undefined;
 
           if (isEliminada) {
-            containerClasses = 'border-slate-200/60 bg-slate-50/50 text-slate-400 opacity-50';
-            badgeClasses = 'bg-slate-200/70 text-slate-400 border-slate-300 line-through';
+            containerClasses = 'border-slate-200/20 opacity-50';
+            badgeClasses = 'bg-slate-200/30 border-slate-300 line-through';
           } else if (!isAnswered && isSelected) {
             containerClasses =
-              'border-indigo-500 bg-indigo-50/70 text-indigo-950 ring-2 ring-indigo-500/20 shadow-xs -translate-y-0.5';
+              'border-indigo-500 bg-indigo-50/10 text-indigo-500 ring-2 ring-indigo-500/20 shadow-xs -translate-y-0.5';
             badgeClasses = 'bg-indigo-600 text-white border-indigo-600 scale-105';
+            textColorStyle = undefined;
           } else if (isAnswered) {
             if (isCorrect) {
               containerClasses =
-                'border-emerald-400 bg-emerald-50/70 text-emerald-950 font-medium shadow-xs';
+                'border-emerald-400 bg-emerald-50/10 text-emerald-600 font-medium shadow-xs';
               badgeClasses = 'bg-emerald-500 text-white border-emerald-500 scale-105';
+              textColorStyle = undefined;
             } else if (isSelected && !isCorrect) {
               containerClasses =
-                'border-rose-300 bg-rose-50/70 text-rose-950 font-medium';
+                'border-rose-400 bg-rose-50/10 text-rose-500 font-medium';
               badgeClasses = 'bg-rose-500 text-white border-rose-500';
+              textColorStyle = undefined;
             } else {
-              containerClasses = 'border-slate-100 text-slate-400 opacity-55';
+              containerClasses = 'border-slate-200/20 opacity-40';
             }
           }
 
@@ -700,13 +747,13 @@ export function QuestionCard({
                   {letra}
                 </span>
                 <span
-  className={`text-sm sm:text-base leading-snug text-justify ${
-    isEliminada ? 'line-through select-none' : ''
-  }`}
-  style={(!isAnswered && !isSelected && !isEliminada) ? { color: 'inherit' } : undefined}
->
-  {textoAlternativa}
-</span>
+                  className={`text-sm sm:text-base leading-snug text-justify ${
+                    isEliminada ? 'line-through select-none' : ''
+                  }`}
+                  style={textColorStyle}
+                >
+                  {textoAlternativa}
+                </span>
               </div>
 
               {!isAnswered && (
@@ -720,9 +767,10 @@ export function QuestionCard({
                   }
                   className={`shrink-0 w-8 h-8 rounded-lg border flex items-center justify-center text-xs transition-all ${
                     isEliminada
-                      ? 'bg-rose-50 border-rose-200 text-rose-600 opacity-100 font-bold'
-                      : 'border-transparent text-slate-400 opacity-60 sm:opacity-0 group-hover:opacity-100 hover:bg-slate-100 hover:border-slate-200 hover:text-slate-700'
+                      ? 'bg-rose-500/20 border-rose-400 text-rose-500 opacity-100 font-bold'
+                      : 'border-transparent opacity-40 sm:opacity-0 group-hover:opacity-80 hover:border-current hover:opacity-100'
                   }`}
+                  style={!isEliminada ? { color: 'inherit' } : undefined}
                 >
                   ✂️
                 </button>
@@ -747,8 +795,8 @@ export function QuestionCard({
         <div
           className={`mb-6 p-4 rounded-xl border text-sm font-medium transition-all duration-300 ${
             acertouQuestao
-              ? 'bg-emerald-50/80 border-emerald-200 text-emerald-800'
-              : 'bg-rose-50/80 border-rose-200 text-rose-800'
+              ? 'bg-emerald-500/10 border-emerald-400 text-emerald-600'
+              : 'bg-rose-500/10 border-rose-400 text-rose-500'
           }`}
         >
           {acertouQuestao
@@ -757,12 +805,12 @@ export function QuestionCard({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 justify-between items-center pt-5 border-t border-slate-100">
+      <div className="flex flex-wrap gap-3 justify-between items-center pt-5 border-t border-slate-200/30">
         <div className="flex flex-wrap items-center gap-4">
           <button
             type="button"
             onClick={() => setShowComment(!showComment)}
-            className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
+            className="text-sm font-semibold text-indigo-500 hover:text-indigo-400 transition-colors"
           >
             {showComment
               ? '▲ Ocultar Comentário'
@@ -772,12 +820,12 @@ export function QuestionCard({
           <button
             type="button"
             onClick={() => setShowNotes(!showNotes)}
-            className="text-sm font-semibold text-amber-600 hover:text-amber-800 transition-colors flex items-center gap-1.5"
+            className="text-sm font-semibold text-amber-500 hover:text-amber-400 transition-colors flex items-center gap-1.5"
           >
             <span>📝</span>
             <span>{showNotes ? 'Ocultar Anotações' : 'Minhas Anotações'}</span>
             {temAnotacao && (
-              <span className="bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">
+              <span className="bg-amber-500/20 text-amber-500 border border-amber-400 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full">
                 ● Com nota
               </span>
             )}
@@ -791,7 +839,7 @@ export function QuestionCard({
             disabled={selectedId === null}
             className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 active:scale-95 ${
               selectedId === null
-                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                ? 'bg-slate-200/30 text-slate-400 cursor-not-allowed'
                 : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500 shadow-md shadow-indigo-200/60'
             }`}
           >
@@ -801,7 +849,7 @@ export function QuestionCard({
           <button
             type="button"
             onClick={handleRefazer}
-            className="bg-indigo-50 text-indigo-700 border border-indigo-200/80 px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-100/70 transition-all active:scale-95"
+            className="bg-indigo-500/10 text-indigo-500 border border-indigo-500/30 px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-500/20 transition-all active:scale-95"
           >
             ↻ Tentar Novamente
           </button>
@@ -810,20 +858,18 @@ export function QuestionCard({
 
       {showNotes && (
         <div
-          style={{ backgroundColor: '#FFFBEB', color: '#1E293B' }}
-          className="mt-5 p-4 border border-amber-200 rounded-xl shadow-2xs transition-all duration-300"
+          style={{ backgroundColor: tema.fundo || '#FFFBEB', color: tema.fonte || '#1E293B' }}
+          className="mt-5 p-4 border border-amber-300/50 rounded-xl shadow-2xs transition-all duration-300"
         >
           <div className="flex items-center justify-between mb-2">
             <p
-              style={{ color: '#92400E' }}
-              className="text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5"
+              className="text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5 text-amber-600"
             >
               <span>📝</span>
               <span>Meu Resumo / Bizu desta Questão</span>
             </p>
             <span
-              style={{ color: '#B45309' }}
-              className="text-[11px] font-semibold"
+              className="text-[11px] font-semibold text-amber-600"
             >
               {anotacaoSalvaFeedback ? '✓ Salvo automaticamente' : 'Salvo no seu caderno'}
             </span>
@@ -833,8 +879,8 @@ export function QuestionCard({
             placeholder="Anote aqui o artigo da lei, jurisprudência, súmula ou macete para não esquecer na revisão..."
             value={anotacaoTexto}
             onChange={(e) => handleMudarAnotacao(e.target.value)}
-            style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}
-            className="w-full p-3 rounded-lg border border-amber-200 text-sm leading-relaxed outline-none focus:border-amber-400"
+            style={{ backgroundColor: tema.cartao || '#FFFFFF', color: 'inherit' }}
+            className="w-full p-3 rounded-lg border border-amber-200/50 text-sm leading-relaxed outline-none focus:border-amber-400"
           />
         </div>
       )}
@@ -867,17 +913,16 @@ export function QuestionCard({
 
         return (
           <div
-            style={{ backgroundColor: "#F8FAFC", color: "#1E293B" }}
-            className="mt-6 p-5 border border-indigo-200 rounded-xl text-sm leading-relaxed shadow-xs transition-all duration-300"
+            style={{ backgroundColor: tema.fundo || '#F8FAFC', color: tema.fonte || '#1E293B' }}
+            className="mt-6 p-5 border border-indigo-200/50 rounded-xl text-sm leading-relaxed shadow-xs transition-all duration-300"
           >
             <p
-              style={{ color: "#1E1B4B" }}
-              className="font-bold mb-1.5 flex items-center gap-1.5"
+              className="font-bold mb-1.5 flex items-center gap-1.5 text-indigo-500"
             >
               📘 Fundamentação do Professor:
             </p>
             <p
-              style={{ color: "#334155" }}
+              style={{ opacity: 0.9 }}
               className="text-justify"
             >
               {textoFundamentacao}
@@ -904,11 +949,11 @@ export function CadernoQuestoes({
     assunto?: string;
   };
 }) {
+  const tema = useTema(); // Hook do tema global
   const [modoCaderno, setModoCaderno] = useState<'todas' | 'erros' | 'favoritas'>('todas');
   const [questoesErros, setQuestoesErros] = useState<any[]>([]);
   const [questoesFavoritas, setQuestoesFavoritas] = useState<any[]>([]);
 
-  // NOVA LÓGICA DE PAGINAÇÃO: ÍNDICES INDEPENDENTES POR ABA
   const [indicesAbas, setIndicesAbas] = useState({ todas: 0, erros: 0, favoritas: 0 });
   const currentIndex = indicesAbas[modoCaderno];
 
@@ -924,7 +969,6 @@ export function CadernoQuestoes({
   const [carregandoRemoto, setCarregandoRemoto] = useState(false);
   const [irParaInput, setIrParaInput] = useState('');
 
-  // A chave de filtro AGORA ignora a aba, só reseta as páginas se alterar banco/órgão/etc
   const chaveFiltroAtual = `${filtros?.banca || ''}-${filtros?.orgao || ''}-${filtros?.ano || ''}-${filtros?.disciplina || ''}-${filtros?.assunto || ''}`;
 
   const sincronizarListasEstudo = async () => {
@@ -1018,7 +1062,6 @@ export function CadernoQuestoes({
       : listaAtiva.length;
 
   useEffect(() => {
-    // Quando mudam os FILTROS REAIS, reiniciamos as páginas de todas as abas para a primeira
     setIndicesAbas({ todas: 0, erros: 0, favoritas: 0 });
     setCacheRemoto({});
   }, [chaveFiltroAtual]);
@@ -1106,7 +1149,10 @@ export function CadernoQuestoes({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-2.5 shadow-xs flex flex-wrap items-center justify-between gap-2">
+      <div 
+        className="border border-slate-200/50 rounded-2xl p-2.5 shadow-xs flex flex-wrap items-center justify-between gap-2"
+        style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || 'inherit' }}
+      >
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
@@ -1114,7 +1160,7 @@ export function CadernoQuestoes({
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               modoCaderno === 'todas'
                 ? 'bg-indigo-600 text-white shadow-xs shadow-indigo-200'
-                : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                : 'border border-transparent hover:border-current opacity-70 hover:opacity-100'
             }`}
           >
             <span>📚</span>
@@ -1127,7 +1173,7 @@ export function CadernoQuestoes({
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               modoCaderno === 'erros'
                 ? 'bg-rose-600 text-white shadow-xs shadow-rose-200'
-                : 'bg-rose-50/70 text-rose-700 border border-rose-200/60 hover:bg-rose-100/70'
+                : 'bg-rose-500/10 text-rose-500 border border-rose-500/30 hover:bg-rose-500/20'
             }`}
           >
             <span>⚠️</span>
@@ -1136,7 +1182,7 @@ export function CadernoQuestoes({
               className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
                 modoCaderno === 'erros'
                   ? 'bg-white/20 text-white'
-                  : 'bg-rose-100 text-rose-700'
+                  : 'bg-rose-500/20 text-rose-500'
               }`}
             >
               {questoesErros.length}
@@ -1149,7 +1195,7 @@ export function CadernoQuestoes({
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               modoCaderno === 'favoritas'
                 ? 'bg-amber-500 text-white shadow-xs shadow-amber-200'
-                : 'bg-amber-50/70 text-amber-700 border border-amber-200/60 hover:bg-amber-100/70'
+                : 'bg-amber-500/10 text-amber-500 border border-amber-500/30 hover:bg-amber-500/20'
             }`}
           >
             <span>⭐</span>
@@ -1158,7 +1204,7 @@ export function CadernoQuestoes({
               className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
                 modoCaderno === 'favoritas'
                   ? 'bg-white/20 text-white'
-                  : 'bg-amber-100 text-amber-800'
+                  : 'bg-amber-500/20 text-amber-500'
               }`}
             >
               {questoesFavoritas.length}
@@ -1166,37 +1212,40 @@ export function CadernoQuestoes({
           </button>
         </div>
 
-        <span className="text-[11px] font-medium text-slate-400 px-2 hidden sm:inline">
+        <span className="text-[11px] font-medium px-2 hidden sm:inline" style={{ opacity: 0.6 }}>
           ✂️ Dica: use a tesourinha nas alternativas para descartar opções
         </span>
       </div>
 
       {total === 0 ? (
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-10 text-center shadow-xs">
+        <div 
+          className="border border-slate-200/50 rounded-2xl p-10 text-center shadow-xs"
+          style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || 'inherit' }}
+        >
           {modoCaderno === 'erros' ? (
             <>
-              <p className="text-base font-bold text-slate-700">
+              <p className="text-base font-bold" style={{ color: 'inherit' }}>
                 🎉 Parabéns! Seu Caderno de Erros está limpo!
               </p>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm mt-1" style={{ color: 'inherit', opacity: 0.7 }}>
                 Sempre que você errar uma questão, ela aparecerá automaticamente aqui para você revisar até acertar.
               </p>
             </>
           ) : modoCaderno === 'favoritas' ? (
             <>
-              <p className="text-base font-bold text-slate-700">
+              <p className="text-base font-bold" style={{ color: 'inherit' }}>
                 ⭐ Você ainda não favoritou nenhuma questão.
               </p>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm mt-1" style={{ color: 'inherit', opacity: 0.7 }}>
                 Clique no botão &quot;☆ Favoritar&quot; no canto superior direito de qualquer questão para salvá-la aqui.
               </p>
             </>
           ) : (
             <>
-              <p className="text-base font-semibold text-slate-700">
+              <p className="text-base font-semibold" style={{ color: 'inherit' }}>
                 Nenhuma questão encontrada para estes filtros.
               </p>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm mt-1" style={{ color: 'inherit', opacity: 0.7 }}>
                 Toque em &quot;Limpar Filtros&quot; na barra lateral para ver todas as questões novamente.
               </p>
             </>
@@ -1204,14 +1253,18 @@ export function CadernoQuestoes({
         </div>
       ) : (
         <>
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <div 
+            className="border border-slate-200/50 rounded-2xl p-3.5 sm:p-4 shadow-xs flex flex-wrap items-center justify-between gap-3"
+            style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || 'inherit' }}
+          >
             <div className="flex items-center gap-1.5 flex-wrap">
               {itensPaginacao.map((item, idx) => {
                 if (item === '...') {
                   return (
                     <span
                       key={`ellipsis-${idx}`}
-                      className="w-7 h-9 flex items-center justify-center text-xs font-bold text-slate-400 select-none"
+                      className="w-7 h-9 flex items-center justify-center text-xs font-bold select-none"
+                      style={{ opacity: 0.5 }}
                     >
                       ...
                     </span>
@@ -1223,18 +1276,18 @@ export function CadernoQuestoes({
 
                 return (
                   <button
-  key={`page-${pageIndex}`}
-  type="button"
-  onClick={() => atualizarIndiceAtual(pageIndex)}
-  className={`min-w-9 h-9 px-2.5 rounded-xl text-xs font-bold transition-all duration-200 active:scale-90 border ${
-    ativo
-      ? 'bg-gradient-to-tr from-indigo-600 to-violet-500 text-white border-indigo-600 shadow-sm shadow-indigo-200 scale-105'
-      : 'border-current opacity-60 hover:opacity-100 hover:border-indigo-400 hover:text-indigo-400'
-  }`}
-  style={!ativo ? { backgroundColor: 'transparent', color: 'inherit' } : undefined}
->
-  {(pageIndex + 1).toLocaleString('pt-BR')}
-</button>
+                    key={`page-${pageIndex}`}
+                    type="button"
+                    onClick={() => atualizarIndiceAtual(pageIndex)}
+                    className={`min-w-9 h-9 px-2.5 rounded-xl text-xs font-bold transition-all duration-200 active:scale-90 border ${
+                      ativo
+                        ? 'bg-gradient-to-tr from-indigo-600 to-violet-500 text-white border-indigo-600 shadow-sm shadow-indigo-200 scale-105'
+                        : 'border-current opacity-60 hover:opacity-100 hover:border-indigo-500 hover:text-indigo-500'
+                    }`}
+                    style={!ativo ? { backgroundColor: 'transparent', color: 'inherit' } : undefined}
+                  >
+                    {(pageIndex + 1).toLocaleString('pt-BR')}
+                  </button>
                 );
               })}
             </div>
@@ -1249,7 +1302,8 @@ export function CadernoQuestoes({
                     placeholder="Ir nº..."
                     value={irParaInput}
                     onChange={(e) => setIrParaInput(e.target.value)}
-                    className="w-20 px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-700 outline-none focus:border-indigo-500"
+                    style={{ backgroundColor: tema.fundo || 'transparent', color: 'inherit' }}
+                    className="w-20 px-2.5 py-1.5 rounded-xl border border-slate-200/50 text-xs font-medium outline-none focus:border-indigo-500"
                   />
                 </form>
               )}
@@ -1258,7 +1312,8 @@ export function CadernoQuestoes({
                 type="button"
                 onClick={() => atualizarIndiceAtual((prev) => Math.max(0, prev - 1))}
                 disabled={indiceSeguro === 0}
-                className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="px-3.5 py-2 rounded-xl border border-current opacity-70 hover:opacity-100 text-xs font-semibold active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                style={{ backgroundColor: 'transparent', color: 'inherit' }}
               >
                 ← Anterior
               </button>
@@ -1274,7 +1329,10 @@ export function CadernoQuestoes({
           </div>
 
           {carregandoRemoto && !questaoAtual ? (
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-12 text-center text-slate-500 text-sm font-medium shadow-xs">
+            <div 
+              className="border border-slate-200/50 rounded-2xl p-12 text-center text-sm font-medium shadow-xs"
+              style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || 'inherit', opacity: 0.7 }}
+            >
               ⏳ Carregando a questão {(indiceSeguro + 1).toLocaleString('pt-BR')}...
             </div>
           ) : (
@@ -1292,10 +1350,11 @@ export function CadernoQuestoes({
 }
 
 // ==========================================
-// 4. MOTOR GERADOR DE QUESTÕES COM IA + OFERTA VITALÍCIA R$ 47
+// 4. MOTOR GERADOR DE QUESTÕES COM IA + OFERTA VITALÍCIA
 // ==========================================
 
 export function BotaoNovaQuestao() {
+  const tema = useTema();
   const [vitalicioAtivo, setVitalicioAtivo] = useState(false);
   const [modalVitalicioAberto, setModalVitalicioAberto] = useState(false);
   const [abaVitalicio, setAbaVitalicio] = useState<'oferta' | 'ativar'>('oferta');
@@ -1304,9 +1363,8 @@ export function BotaoNovaQuestao() {
   const [loadingAtivacao, setLoadingAtivacao] = useState(false);
   const [resolvidasGratis, setResolvidasGratis] = useState(0);
 
-  // CONTROLE DE CRÉDITOS IA (VARIÁVEIS)
   const [iaUsadas, setIaUsadas] = useState(0);
-  const [limiteIaTotal, setLimiteIaTotal] = useState(10); // 10 é o padrão do Vitalício
+  const [limiteIaTotal, setLimiteIaTotal] = useState(10); 
   const [abaAtivaIa, setAbaAtivaIa] = useState<'gerar' | 'comprar'>('gerar');
   const [codigoCredito, setCodigoCredito] = useState('');
   const [erroCredito, setErroCredito] = useState('');
@@ -1322,8 +1380,6 @@ export function BotaoNovaQuestao() {
   const [assuntoIa, setAssuntoIa] = useState('');
   const [qtdIa, setQtdIa] = useState(5);
   const [gerandoIa, setGerandoIa] = useState(false);
-  
-  // NOVO ESTADO: Controla o balão de sucesso
   const [sucessoIa, setSucessoIa] = useState(false);
 
   const atualizarStatusComercial = () => {
@@ -1534,14 +1590,12 @@ export function BotaoNovaQuestao() {
         }
       }
 
-      // SUCESSO: DESCONTA OS CRÉDITOS E ATIVA O BALÃO DE SUCESSO
       const novoTotal = iaUsadas + quantidadeSegura;
       localStorage.setItem('qpro_ia_usadas', String(novoTotal));
       setIaUsadas(novoTotal);
 
-      setSucessoIa(true); // <--- Ativa o ecrã de sucesso
+      setSucessoIa(true); 
       
-      // Aguarda 3 segundos para o utilizador ler a mensagem antes de redirecionar
       setTimeout(() => {
         setModalIaAberto(false);
         setAssuntoIa('');
@@ -1565,7 +1619,7 @@ export function BotaoNovaQuestao() {
         {vitalicioAtivo ? (
           <span
             title="Você possui Acesso Vitalício Ilimitado ao Qpro Concursos"
-            className="flex items-center gap-1 bg-amber-50 border border-amber-300/80 text-amber-800 px-3 py-2 rounded-xl text-xs font-extrabold shadow-2xs"
+            className="flex items-center gap-1 bg-amber-500/20 border border-amber-400 text-amber-600 px-3 py-2 rounded-xl text-xs font-extrabold shadow-2xs"
           >
             <span>👑</span>
             <span className="hidden md:inline">Acesso Vitalício</span>
@@ -1602,10 +1656,10 @@ export function BotaoNovaQuestao() {
       {modalVitalicioAberto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto">
           <div
-            style={{ backgroundColor: '#FFFFFF', color: '#0F172A' }}
-            className="border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-2xl my-8"
+            style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || '#0F172A' }}
+            className="border border-slate-200/20 rounded-2xl max-w-lg w-full p-6 shadow-2xl my-8"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <div className="flex items-center justify-between border-b border-slate-200/30 pb-3 mb-4">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -1613,7 +1667,7 @@ export function BotaoNovaQuestao() {
                   style={
                     abaVitalicio === 'oferta'
                       ? { backgroundColor: '#4F46E5', color: '#FFFFFF' }
-                      : { backgroundColor: '#F1F5F9', color: '#475569' }
+                      : { backgroundColor: 'transparent', color: 'inherit', border: '1px solid currentColor', opacity: 0.7 }
                   }
                   className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
                 >
@@ -1625,7 +1679,7 @@ export function BotaoNovaQuestao() {
                   style={
                     abaVitalicio === 'ativar'
                       ? { backgroundColor: '#4F46E5', color: '#FFFFFF' }
-                      : { backgroundColor: '#F1F5F9', color: '#475569' }
+                      : { backgroundColor: 'transparent', color: 'inherit', border: '1px solid currentColor', opacity: 0.7 }
                   }
                   className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
                 >
@@ -1635,8 +1689,8 @@ export function BotaoNovaQuestao() {
               <button
                 type="button"
                 onClick={() => setModalVitalicioAberto(false)}
-                style={{ color: '#64748B' }}
-                className="text-sm font-bold hover:opacity-80 px-2 py-1"
+                className="text-sm font-bold hover:opacity-70 px-2 py-1"
+                style={{ color: 'inherit' }}
               >
                 ✕
               </button>
@@ -1645,72 +1699,66 @@ export function BotaoNovaQuestao() {
             {abaVitalicio === 'oferta' ? (
               <div>
                 <div
-                  style={{ backgroundColor: '#EEF2FF', borderColor: '#C7D2FE' }}
+                  style={{ backgroundColor: 'rgba(79, 70, 229, 0.1)', borderColor: 'rgba(79, 70, 229, 0.2)' }}
                   className="rounded-xl border p-3.5 mb-4 text-center"
                 >
-                  <span
-                    style={{ color: '#4338CA' }}
-                    className="text-[11px] font-extrabold uppercase tracking-wider"
-                  >
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-500">
                     ⚡ Chega de pagar mensalidades caras
                   </span>
-                  <h3
-                    style={{ color: '#1E1B4B' }}
-                    className="text-lg sm:text-xl font-extrabold mt-0.5"
-                  >
+                  <h3 className="text-lg sm:text-xl font-extrabold mt-0.5" style={{ color: 'inherit' }}>
                     Desbloqueie o Qpro Concursos Completo
                   </h3>
-                  <p style={{ color: '#475569' }} className="text-xs mt-1">
+                  <p className="text-xs mt-1" style={{ opacity: 0.8 }}>
                     Pague <strong>uma única vez</strong> e tenha acesso ilimitado para sempre!
                   </p>
                 </div>
 
                 <ul className="space-y-2.5 text-xs sm:text-sm mb-5">
                   <li className="flex items-start gap-2.5">
-                    <span className="text-emerald-600 font-extrabold">✓</span>
-                    <span style={{ color: '#334155' }}>
+                    <span className="text-emerald-500 font-extrabold">✓</span>
+                    <span style={{ opacity: 0.9 }}>
                       <strong>Acesso Vitalício Ilimitado</strong> a todas as questões comentadas da plataforma
                     </span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <span className="text-emerald-600 font-extrabold">✓</span>
-                    <span style={{ color: '#334155' }}>
+                    <span className="text-emerald-500 font-extrabold">✓</span>
+                    <span style={{ opacity: 0.9 }}>
                       <strong>✨ Gerador de Questões com IA:</strong> crie questões inéditas sob demanda para qualquer disciplina
                     </span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <span className="text-emerald-600 font-extrabold">✓</span>
-                    <span style={{ color: '#334155' }}>
+                    <span className="text-emerald-500 font-extrabold">✓</span>
+                    <span style={{ opacity: 0.9 }}>
                       <strong>⚠️ Caderno de Erros Automático + Favoritas + Bizus:</strong> revise exatamente onde você precisa melhorar
                     </span>
                   </li>
                   <li className="flex items-start gap-2.5">
-                    <span className="text-emerald-600 font-extrabold">✓</span>
-                    <span style={{ color: '#334155' }}>
+                    <span className="text-emerald-500 font-extrabold">✓</span>
+                    <span style={{ opacity: 0.9 }}>
                       <strong>📈 Raio-X por Disciplina + Temas de Leitura (Modo Kindle e Noturno)</strong>
                     </span>
                   </li>
                 </ul>
 
                 <div
-                  style={{ backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' }}
+                  style={{ backgroundColor: tema.fundo || '#F8FAFC', borderColor: 'rgba(0,0,0,0.05)' }}
                   className="rounded-2xl border p-4 text-center mb-5"
                 >
-                  <p style={{ color: '#94A3B8' }} className="text-xs line-through font-semibold">
+                  <p className="text-xs line-through font-semibold" style={{ opacity: 0.6 }}>
                     De R$ 197,00/ano por apenas:
                   </p>
                   <div className="flex items-baseline justify-center gap-1.5 mt-1">
-                    <span style={{ color: '#0F172A' }} className="text-3xl font-extrabold">
+                    <span className="text-3xl font-extrabold" style={{ color: 'inherit' }}>
                       R$ 47,00
                     </span>
                     <span
-                      style={{ backgroundColor: '#DCFCE7', color: '#15803D' }}
+                      style={{ backgroundColor: 'rgba(34, 197, 94, 0.1)', color: '#10B981' }}
                       className="text-[11px] font-extrabold px-2 py-0.5 rounded-full"
                     >
                       PAGAMENTO ÚNICO
                     </span>
                   </div>
-                  <p style={{ color: '#64748B' }} className="text-xs mt-1">
+                  <p className="text-xs mt-1" style={{ opacity: 0.7 }}>
                     À vista no PIX ou em até <strong>6x de R$ 8,85</strong> no cartão
                   </p>
                 </div>
@@ -1724,12 +1772,13 @@ export function BotaoNovaQuestao() {
                   🚀 Quero Meu Acesso Vitalício por R$ 47,00
                 </a>
 
-                <div className="mt-3 flex items-center justify-between text-[11px] text-slate-400">
+                <div className="mt-3 flex items-center justify-between text-[11px]" style={{ opacity: 0.6 }}>
                   <span>🔒 Compra 100% Segura • Liberação Imediata</span>
                   <button
                     type="button"
                     onClick={() => setAbaVitalicio('ativar')}
-                    className="text-indigo-600 font-bold hover:underline"
+                    className="font-bold hover:underline"
+                    style={{ color: 'inherit' }}
                   >
                     Já comprou? Ativar código →
                   </button>
@@ -1738,25 +1787,22 @@ export function BotaoNovaQuestao() {
             ) : (
               <form onSubmit={handleAtivarCodigoVitalicio} className="space-y-4">
                 <div>
-                  <h4 style={{ color: '#0F172A' }} className="text-base font-extrabold">
+                  <h4 className="text-base font-extrabold" style={{ color: 'inherit' }}>
                     🔑 Ativar Meu Acesso Vitalício
                   </h4>
-                  <p style={{ color: '#64748B' }} className="text-xs mt-1">
+                  <p className="text-xs mt-1" style={{ opacity: 0.7 }}>
                     Digite abaixo o código de ativação que você recebeu após confirmar o pagamento de R$ 47,00:
                   </p>
                 </div>
 
                 {erroAtivacao && (
-                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700">
+                  <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs font-semibold text-rose-500">
                     {erroAtivacao}
                   </div>
                 )}
 
                 <div>
-                  <label
-                    style={{ color: '#334155' }}
-                    className="block text-xs font-bold uppercase mb-1.5"
-                  >
+                  <label className="block text-xs font-bold uppercase mb-1.5" style={{ opacity: 0.8 }}>
                     Código de Ativação *
                   </label>
                   <input
@@ -1768,8 +1814,8 @@ export function BotaoNovaQuestao() {
                       setCodigoAtivacao(e.target.value);
                       setErroAtivacao('');
                     }}
-                    style={{ backgroundColor: '#FFFFFF', color: '#0F172A' }}
-                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm font-bold uppercase tracking-wider outline-none focus:border-indigo-600"
+                    style={{ backgroundColor: tema.fundo || '#FFFFFF', color: 'inherit' }}
+                    className="w-full px-3.5 py-2.5 border border-slate-200/40 rounded-xl text-sm font-bold uppercase tracking-wider outline-none focus:border-indigo-500"
                   />
                 </div>
 
@@ -1777,8 +1823,8 @@ export function BotaoNovaQuestao() {
                   <button
                     type="button"
                     onClick={() => setAbaVitalicio('oferta')}
-                    style={{ backgroundColor: '#F8FAFC', color: '#475569' }}
-                    className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold hover:opacity-80"
+                    style={{ backgroundColor: 'transparent', color: 'inherit' }}
+                    className="px-4 py-2.5 rounded-xl border border-current opacity-70 text-xs font-semibold hover:opacity-100"
                   >
                     ← Voltar para Oferta
                   </button>
@@ -1797,29 +1843,26 @@ export function BotaoNovaQuestao() {
       )}
 
       {modalIaAberto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
           <div
-            style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}
-            className="border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-xl"
+            style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || '#1E293B' }}
+            className="border border-slate-200/20 rounded-2xl max-w-md w-full p-6 shadow-xl"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <div className="flex items-center justify-between border-b border-slate-200/30 pb-3 mb-4">
               <div>
-                <h3
-                  style={{ color: '#0F172A' }}
-                  className="text-base font-extrabold flex items-center gap-2"
-                >
+                <h3 className="text-base font-extrabold flex items-center gap-2" style={{ color: 'inherit' }}>
                   <span>✨</span>
                   <span>Gerar Questões com IA</span>
                 </h3>
-                <p style={{ color: '#64748B' }} className="text-xs mt-0.5">
+                <p className="text-xs mt-0.5" style={{ opacity: 0.7 }}>
                   Escolha a disciplina e gere até 5 questões comentadas na hora
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setModalIaAberto(false)}
-                style={{ color: '#64748B' }}
-                className="text-sm font-bold hover:opacity-80 px-2 py-1"
+                className="text-sm font-bold hover:opacity-70 px-2 py-1"
+                style={{ color: 'inherit' }}
               >
                 ✕
               </button>
@@ -1828,27 +1871,26 @@ export function BotaoNovaQuestao() {
             {/* PAINEL DE SUCESSO */}
             {sucessoIa ? (
               <div className="flex flex-col items-center justify-center py-8 text-center animate-in fade-in zoom-in duration-300">
-                <div className="w-16 h-16 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-sm text-4xl">
+                <div className="w-16 h-16 bg-emerald-500/10 text-emerald-500 rounded-full flex items-center justify-center mb-4 shadow-sm text-4xl">
                   ✨
                 </div>
-                <h3 className="text-xl font-extrabold text-emerald-600 mb-1">Questão gerada com sucesso!</h3>
-                <p className="text-sm font-medium text-slate-600 mb-2">As questões foram guardadas no banco.</p>
-                <p className="text-xs text-slate-400">A redirecionar para o seu caderno de estudos...</p>
+                <h3 className="text-xl font-extrabold text-emerald-500 mb-1">Questão gerada com sucesso!</h3>
+                <p className="text-sm font-medium mb-2" style={{ opacity: 0.8 }}>As questões foram guardadas no banco.</p>
+                <p className="text-xs" style={{ opacity: 0.6 }}>A redirecionar para o seu caderno de estudos...</p>
               </div>
             ) : (
               <>
-                {/* PAINEL DE CRÉDITOS IA E ABAS DE COMPRA */}
                 <div className="mb-5 flex flex-col gap-3">
-                  <div className="flex items-center justify-between bg-indigo-50 border border-indigo-100 p-3 rounded-xl">
+                  <div className="flex items-center justify-between bg-indigo-500/10 border border-indigo-500/20 p-3 rounded-xl">
                     <div>
                       <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-500">Seu Saldo de Créditos</span>
-                      <div className="text-sm font-bold text-indigo-900 mt-0.5">
-                        {limiteIaTotal - iaUsadas} Disponíveis <span className="text-[10px] font-normal text-indigo-400">({iaUsadas}/{limiteIaTotal} usadas)</span>
+                      <div className="text-sm font-bold mt-0.5" style={{ color: 'inherit' }}>
+                        {limiteIaTotal - iaUsadas} Disponíveis <span className="text-[10px] font-normal opacity-70">({iaUsadas}/{limiteIaTotal} usadas)</span>
                       </div>
                     </div>
                     <button 
                       onClick={() => setAbaAtivaIa(abaAtivaIa === 'comprar' ? 'gerar' : 'comprar')}
-                      className="bg-amber-400 hover:bg-amber-500 text-amber-950 px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase shadow-sm transition-all active:scale-95"
+                      className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase shadow-sm transition-all active:scale-95"
                     >
                       {abaAtivaIa === 'comprar' ? 'Voltar' : '+ Créditos'}
                     </button>
@@ -1857,20 +1899,21 @@ export function BotaoNovaQuestao() {
 
                 {abaAtivaIa === 'comprar' ? (
                   <div className="space-y-4">
-                    <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
-                      <h4 className="text-sm font-bold text-slate-800 mb-2">Seus créditos acabaram?</h4>
-                      <p className="text-xs text-slate-600 mb-2">Escolha o pacote ideal para continuar a gerar simulados inéditos e focar na sua aprovação.</p>
+                    <div className="border border-slate-200/20 p-4 rounded-xl text-center" style={{ backgroundColor: tema.fundo || '#F8FAFC' }}>
+                      <h4 className="text-sm font-bold mb-2" style={{ color: 'inherit' }}>Seus créditos acabaram?</h4>
+                      <p className="text-xs mb-2" style={{ opacity: 0.8 }}>Escolha o pacote ideal para continuar a gerar simulados inéditos e focar na sua aprovação.</p>
                       
                       <div className="flex flex-col gap-2 mt-3">
                         <a 
                           href="https://pay.kiwify.com.br/pO9bvnh" 
                           target="_blank" rel="noopener noreferrer"
-                          className="flex items-center justify-between px-4 py-2.5 bg-white border border-slate-200 rounded-xl hover:border-indigo-300 hover:bg-indigo-50/50 transition-all active:scale-95"
+                          className="flex items-center justify-between px-4 py-2.5 border border-slate-200/30 rounded-xl hover:border-indigo-400 hover:bg-indigo-500/10 transition-all active:scale-95"
+                          style={{ backgroundColor: tema.cartao || '#FFFFFF', color: 'inherit' }}
                         >
                           <div className="text-left">
-                            <p className="text-xs font-bold text-slate-800">Pack Turbo (100 Questões)</p>
+                            <p className="text-xs font-bold" style={{ color: 'inherit' }}>Pack Turbo (100 Questões)</p>
                           </div>
-                          <span className="text-xs font-extrabold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">R$ 19,90</span>
+                          <span className="text-xs font-extrabold text-indigo-500 bg-indigo-500/10 px-2 py-1 rounded-lg">R$ 19,90</span>
                         </a>
 
                         <a 
@@ -1899,13 +1942,14 @@ export function BotaoNovaQuestao() {
                       </div>
                     </div>
 
-                    <form onSubmit={handleAtivarCreditos} className="mt-4 pt-4 border-t border-slate-100">
-                      <label className="block text-xs font-bold uppercase mb-1.5">Já comprou? Digite o código recebido:</label>
-                      {erroCredito && <div className="p-2 mb-2 bg-rose-50 text-rose-700 text-xs font-semibold rounded-lg">{erroCredito}</div>}
+                    <form onSubmit={handleAtivarCreditos} className="mt-4 pt-4 border-t border-slate-200/30">
+                      <label className="block text-xs font-bold uppercase mb-1.5" style={{ opacity: 0.8 }}>Já comprou? Digite o código recebido:</label>
+                      {erroCredito && <div className="p-2 mb-2 bg-rose-500/10 text-rose-500 text-xs font-semibold rounded-lg">{erroCredito}</div>}
                       <div className="flex gap-2">
                         <input 
                           type="text" required placeholder="Ex: CRED100-XYZ" value={codigoCredito} onChange={(e) => {setCodigoCredito(e.target.value); setErroCredito('');}}
-                          className="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-sm font-bold uppercase outline-none focus:border-indigo-500"
+                          className="flex-1 px-3 py-2 border border-slate-200/40 rounded-xl text-sm font-bold uppercase outline-none focus:border-indigo-500"
+                          style={{ backgroundColor: tema.fundo || '#FFFFFF', color: 'inherit' }}
                         />
                         <button type="submit" disabled={loadingAtivacao} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold disabled:opacity-50 hover:bg-indigo-500 transition-all">
                           {loadingAtivacao ? 'Validando...' : 'Ativar'}
@@ -1916,17 +1960,14 @@ export function BotaoNovaQuestao() {
                 ) : (
                   <form onSubmit={handleGerarQuestoesUsuarioIA} className="flex flex-col gap-4">
                     <div>
-                      <label
-                        style={{ color: '#334155' }}
-                        className="block text-xs font-bold uppercase tracking-wide mb-1.5"
-                      >
+                      <label className="block text-xs font-bold uppercase tracking-wide mb-1.5" style={{ opacity: 0.8 }}>
                         Disciplina *
                       </label>
                       <select
                         value={discIaSelecionada}
                         onChange={(e) => setDiscIaSelecionada(e.target.value)}
-                        style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}
-                        className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:border-indigo-500"
+                        style={{ backgroundColor: tema.fundo || '#FFFFFF', color: 'inherit' }}
+                        className="w-full px-3 py-2.5 border border-slate-200/40 rounded-xl text-sm font-medium outline-none focus:border-indigo-500"
                       >
                         {disciplinasBanco.map((d) => (
                           <option key={d} value={d}>
@@ -1939,10 +1980,7 @@ export function BotaoNovaQuestao() {
 
                     {discIaSelecionada === '__outra__' && (
                       <div>
-                        <label
-                          style={{ color: '#334155' }}
-                          className="block text-xs font-bold uppercase tracking-wide mb-1.5"
-                        >
+                        <label className="block text-xs font-bold uppercase tracking-wide mb-1.5" style={{ opacity: 0.8 }}>
                           Digite a Disciplina *
                         </label>
                         <input
@@ -1951,17 +1989,14 @@ export function BotaoNovaQuestao() {
                           placeholder="Ex: Legislação Municipal, Engenharia Civil..."
                           value={discIaCustom}
                           onChange={(e) => setDiscIaCustom(e.target.value)}
-                          style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}
-                          className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500"
+                          style={{ backgroundColor: tema.fundo || '#FFFFFF', color: 'inherit' }}
+                          className="w-full px-3 py-2 border border-slate-200/40 rounded-xl text-sm outline-none focus:border-indigo-500"
                         />
                       </div>
                     )}
 
                     <div>
-                      <label
-                        style={{ color: '#334155' }}
-                        className="block text-xs font-bold uppercase tracking-wide mb-1.5"
-                      >
+                      <label className="block text-xs font-bold uppercase tracking-wide mb-1.5" style={{ opacity: 0.8 }}>
                         Assunto Específico <span className="font-normal opacity-70">(opcional)</span>
                       </label>
                       <input
@@ -1969,16 +2004,13 @@ export function BotaoNovaQuestao() {
                         placeholder="Ex: Licitações, Poderes Administrativos, LRF..."
                         value={assuntoIa}
                         onChange={(e) => setAssuntoIa(e.target.value)}
-                        style={{ backgroundColor: '#FFFFFF', color: '#1E293B' }}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-indigo-500"
+                        style={{ backgroundColor: tema.fundo || '#FFFFFF', color: 'inherit' }}
+                        className="w-full px-3 py-2 border border-slate-200/40 rounded-xl text-sm outline-none focus:border-indigo-500"
                       />
                     </div>
 
                     <div>
-                      <label
-                        style={{ color: '#334155' }}
-                        className="block text-xs font-bold uppercase tracking-wide mb-1.5"
-                      >
+                      <label className="block text-xs font-bold uppercase tracking-wide mb-1.5" style={{ opacity: 0.8 }}>
                         Quantidade de Questões (Máx. 5)
                       </label>
                       <div className="grid grid-cols-5 gap-2">
@@ -1993,9 +2025,9 @@ export function BotaoNovaQuestao() {
                               style={
                                 ativo
                                   ? { backgroundColor: '#4F46E5', color: '#FFFFFF', borderColor: '#4F46E5' }
-                                  : { backgroundColor: '#F8FAFC', color: '#334155', borderColor: '#E2E8F0' }
+                                  : { backgroundColor: 'transparent', color: 'inherit', borderColor: 'currentColor', opacity: 0.6 }
                               }
-                              className="py-2 rounded-xl border text-xs font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className={`py-2 rounded-xl border text-xs font-bold transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${ativo ? '' : 'hover:opacity-100'}`}
                             >
                               {num} {num === 1 ? 'questão' : 'questões'}
                             </button>
@@ -2004,12 +2036,12 @@ export function BotaoNovaQuestao() {
                       </div>
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 mt-1">
+                    <div className="flex justify-end gap-2 pt-3 border-t border-slate-200/30 mt-1">
                       <button
                         type="button"
                         onClick={() => setModalIaAberto(false)}
-                        style={{ backgroundColor: '#F8FAFC', color: '#475569' }}
-                        className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold hover:opacity-90"
+                        style={{ backgroundColor: 'transparent', color: 'inherit' }}
+                        className="px-4 py-2 rounded-xl border border-current opacity-70 text-xs font-semibold hover:opacity-100"
                       >
                         Cancelar
                       </button>
@@ -2037,9 +2069,10 @@ export function BotaoNovaQuestao() {
 }
 
 // ==========================================
-// 5. IMPORTADOR DE PROVAS COM IA (ATUALIZADO COM SALA DE ESPERA)
+// 5. IMPORTADOR DE PROVAS COM IA
 // ==========================================
 export function ImportadorProvas() {
+  const tema = useTema(); // Hook
   const [provaPdf, setProvaPdf] = useState<File | null>(null);
   const [gabaritoPdf, setGabaritoPdf] = useState<File | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "review" | "saving" | "success" | "error">("idle");
@@ -2096,33 +2129,38 @@ export function ImportadorProvas() {
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-6">
+    <div 
+      className="p-6 rounded-2xl border border-slate-200/50 shadow-sm mb-6"
+      style={{ backgroundColor: tema.cartao || '#FFFFFF', color: tema.fonte || 'inherit' }}
+    >
       <h3 className="font-bold text-lg mb-1 flex items-center gap-2">
         <Upload className="w-5 h-5 text-indigo-500" />
         Importar PDF com IA (Validação Segura)
       </h3>
-      <p className="text-xs text-slate-500 mb-5">
+      <p className="text-xs mb-5" style={{ opacity: 0.7 }}>
         A IA extrai os dados, você confere no ecrã e só depois guarda no banco de dados.
       </p>
 
       {status !== "review" && status !== "saving" && (
         <form onSubmit={handleUpload} className="grid sm:grid-cols-2 gap-4 items-end">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">Caderno de Prova (PDF)</label>
+            <label className="block text-xs font-semibold mb-1" style={{ opacity: 0.8 }}>Caderno de Prova (PDF)</label>
             <input 
               type="file" 
               accept=".pdf" 
               onChange={(e) => setProvaPdf(e.target.files?.[0] || null)} 
-              className="w-full text-sm border border-slate-200 p-2 rounded-xl text-slate-600 bg-slate-50" 
+              className="w-full text-sm border border-slate-200/40 p-2 rounded-xl"
+              style={{ backgroundColor: tema.fundo || '#F8FAFC', color: 'inherit' }} 
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">Gabarito Oficial (PDF)</label>
+            <label className="block text-xs font-semibold mb-1" style={{ opacity: 0.8 }}>Gabarito Oficial (PDF)</label>
             <input 
               type="file" 
               accept=".pdf" 
               onChange={(e) => setGabaritoPdf(e.target.files?.[0] || null)} 
-              className="w-full text-sm border border-slate-200 p-2 rounded-xl text-slate-600 bg-slate-50" 
+              className="w-full text-sm border border-slate-200/40 p-2 rounded-xl"
+              style={{ backgroundColor: tema.fundo || '#F8FAFC', color: 'inherit' }} 
             />
           </div>
           <div className="sm:col-span-2">
@@ -2138,15 +2176,15 @@ export function ImportadorProvas() {
       )}
 
       {status === "review" && (
-        <div className="mt-4 border border-amber-200 bg-amber-50 rounded-xl p-4">
-          <h4 className="font-bold text-amber-800 mb-3 text-sm">Pré-visualização (Ainda não guardado)</h4>
-          <div className="max-h-64 overflow-y-auto space-y-3 mb-4 bg-white p-3 rounded-lg border border-amber-100">
+        <div className="mt-4 border border-amber-500/30 bg-amber-500/10 rounded-xl p-4">
+          <h4 className="font-bold text-amber-500 mb-3 text-sm">Pré-visualização (Ainda não guardado)</h4>
+          <div className="max-h-64 overflow-y-auto space-y-3 mb-4 p-3 rounded-lg border border-amber-500/20" style={{ backgroundColor: tema.fundo || '#FFFFFF' }}>
             {questoesExtraidas.map((q, idx) => (
-              <div key={idx} className="border-b border-slate-100 pb-2 mb-2 last:border-0">
-                <span className="text-[10px] font-bold text-indigo-600 uppercase">Q{idx + 1} - {q.banca} - {q.disciplina}</span>
-                <p className="text-xs text-slate-700 mt-1 line-clamp-2">{q.enunciado}</p>
+              <div key={idx} className="border-b border-slate-200/30 pb-2 mb-2 last:border-0">
+                <span className="text-[10px] font-bold text-indigo-500 uppercase">Q{idx + 1} - {q.banca} - {q.disciplina}</span>
+                <p className="text-xs mt-1 line-clamp-2" style={{ opacity: 0.9 }}>{q.enunciado}</p>
                 <div className="mt-1 flex gap-2">
-                  <span className="text-[10px] text-slate-500">{q.alternativas?.length || 0} alternativas identificadas.</span>
+                  <span className="text-[10px]" style={{ opacity: 0.6 }}>{q.alternativas?.length || 0} alternativas identificadas.</span>
                 </div>
               </div>
             ))}
@@ -2154,7 +2192,8 @@ export function ImportadorProvas() {
           <div className="flex gap-2">
             <button 
               onClick={() => setStatus("idle")} 
-              className="flex-1 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
+              className="flex-1 py-2 text-xs font-bold border border-current opacity-70 hover:opacity-100 rounded-lg"
+              style={{ backgroundColor: 'transparent', color: 'inherit' }}
             >
               Descartar e Tentar Novo PDF
             </button>
@@ -2170,10 +2209,10 @@ export function ImportadorProvas() {
 
       {mensagem && status !== "review" && (
         <div className={`mt-4 p-3 rounded-xl text-sm font-medium border flex items-center gap-2 ${
-          status === "error" ? "bg-rose-50 text-rose-700 border-rose-200" : 
-          status === "success" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : 
-          status === "saving" ? "bg-indigo-50 text-indigo-700 border-indigo-200" :
-          "bg-sky-50 text-sky-700 border-sky-200"
+          status === "error" ? "bg-rose-500/10 text-rose-500 border-rose-500/30" : 
+          status === "success" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30" : 
+          status === "saving" ? "bg-indigo-500/10 text-indigo-500 border-indigo-500/30" :
+          "bg-sky-500/10 text-sky-500 border-sky-500/30"
         }`}>
           {status === "saving" && <Loader2 className="w-4 h-4 animate-spin" />}
           {mensagem}
@@ -2187,13 +2226,13 @@ export function ImportadorProvas() {
 // 6. PÁGINA EXCLUSIVA DO ADMINISTRADOR (/admin)
 // ==========================================
 export function PainelAdminExclusivo() {
+  const tema = useTema(); // Hook
   const SENHA_ADMIN = "admin123";
 
   const [autenticado, setAutenticado] = useState(false);
   const [senha, setSenha] = useState('');
   const [erroLogin, setErroLogin] = useState(false);
 
-  // ABA ATIVA AGORA COMEÇA NA IMPORTAÇÃO DE PDF
   const [abaAtiva, setAbaAtiva] = useState<'prova_ia' | 'json' | 'ferramentas'>('prova_ia');
   const [salvando, setSalvando] = useState(false);
   const [erroMsg, setErroMsg] = useState('');
@@ -2245,12 +2284,12 @@ export function PainelAdminExclusivo() {
 
   if (!autenticado) {
     return (
-      <div className="min-h-svh flex items-center justify-center bg-slate-100 p-4">
-        <div className="bg-white border border-slate-200 rounded-2xl max-w-sm w-full p-6 shadow-lg">
-          <h1 className="text-lg font-extrabold text-slate-900">
+      <div className="min-h-svh flex items-center justify-center p-4" style={{ backgroundColor: tema.fundo || '#F1F5F9', color: tema.fonte || '#0F172A' }}>
+        <div className="border border-slate-200/50 rounded-2xl max-w-sm w-full p-6 shadow-lg" style={{ backgroundColor: tema.cartao || '#FFFFFF' }}>
+          <h1 className="text-lg font-extrabold" style={{ color: 'inherit' }}>
             Painel Administrativo • Qpro
           </h1>
-          <p className="text-xs text-slate-500 mt-1 mb-4">
+          <p className="text-xs mt-1 mb-4" style={{ opacity: 0.7 }}>
             Área restrita para gestão do banco de questões
           </p>
           <form onSubmit={handleLogin} className="space-y-3">
@@ -2262,10 +2301,11 @@ export function PainelAdminExclusivo() {
                 setSenha(e.target.value);
                 setErroLogin(false);
               }}
-              className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm outline-none focus:border-indigo-600"
+              style={{ backgroundColor: tema.fundo || '#FFFFFF', color: 'inherit' }}
+              className="w-full px-3.5 py-2.5 border border-slate-300/40 rounded-xl text-sm outline-none focus:border-indigo-600"
             />
             {erroLogin && (
-              <p className="text-xs font-semibold text-rose-600">
+              <p className="text-xs font-semibold text-rose-500">
                 Senha incorreta.
               </p>
             )}
@@ -2277,7 +2317,8 @@ export function PainelAdminExclusivo() {
             </button>
             <a
               href="/"
-              className="block text-center text-xs text-slate-500 hover:text-indigo-600 pt-2"
+              className="block text-center text-xs hover:text-indigo-500 pt-2"
+              style={{ opacity: 0.6 }}
             >
               ← Voltar para o aplicativo
             </a>
@@ -2288,28 +2329,28 @@ export function PainelAdminExclusivo() {
   }
 
   return (
-    <div className="min-h-svh bg-slate-50 text-slate-900 p-4 sm:p-8">
-      <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
+    <div className="min-h-svh p-4 sm:p-8" style={{ backgroundColor: tema.fundo || '#F8FAFC', color: tema.fonte || '#0F172A' }}>
+      <div className="max-w-3xl mx-auto border border-slate-200/50 rounded-2xl p-6 shadow-xs" style={{ backgroundColor: tema.cartao || '#FFFFFF' }}>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/30 pb-4 mb-5">
           <div>
-            <h1 className="text-xl font-extrabold text-slate-900">
+            <h1 className="text-xl font-extrabold" style={{ color: 'inherit' }}>
               ⚙️ Painel Administrativo Qpro Concursos
             </h1>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs" style={{ opacity: 0.7 }}>
               Importe provas em PDF ou em lote JSON
             </p>
           </div>
           <div className="flex items-center gap-2">
             <a
               href="/"
-              className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50"
+              className="px-3.5 py-2 rounded-xl border border-current opacity-70 hover:opacity-100 text-xs font-bold"
             >
               ← Ver App do Aluno
             </a>
             <button
               type="button"
               onClick={handleLogout}
-              className="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100"
+              className="px-3.5 py-2 rounded-xl bg-rose-500/10 text-rose-500 border border-rose-500/30 text-xs font-bold hover:bg-rose-500/20"
             >
               Sair
             </button>
@@ -2323,7 +2364,7 @@ export function PainelAdminExclusivo() {
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
               abaAtiva === 'prova_ia'
                 ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20'
             }`}
           >
             🤖 Importar PDF (IA)
@@ -2335,7 +2376,7 @@ export function PainelAdminExclusivo() {
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
               abaAtiva === 'json'
                 ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20'
             }`}
           >
             📥 Importar Base Lote (JSON)
@@ -2346,7 +2387,7 @@ export function PainelAdminExclusivo() {
             className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
               abaAtiva === 'ferramentas'
                 ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                : 'bg-indigo-500/10 text-indigo-500 hover:bg-indigo-500/20'
             }`}
           >
             🛠️ Simulador de Cliente
@@ -2354,13 +2395,13 @@ export function PainelAdminExclusivo() {
         </div>
 
         {erroMsg && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700">
+          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-xs font-semibold text-rose-500">
             {erroMsg}
           </div>
         )}
 
         {sucessoMsg && (
-          <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700">
+          <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-semibold text-emerald-500">
             {sucessoMsg}
           </div>
         )}
@@ -2368,11 +2409,11 @@ export function PainelAdminExclusivo() {
         {abaAtiva === 'prova_ia' && <ImportadorProvas />}
 
         {abaAtiva === 'ferramentas' && (
-          <div className="space-y-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <h3 className="text-sm font-bold text-slate-800">
+          <div className="space-y-4 p-4 rounded-xl border border-slate-200/30" style={{ backgroundColor: tema.fundo || '#F8FAFC' }}>
+            <h3 className="text-sm font-bold" style={{ color: 'inherit' }}>
               Simular Visão do Cliente neste Aparelho
             </h3>
-            <p className="text-xs text-slate-600">
+            <p className="text-xs" style={{ opacity: 0.8 }}>
               Use os botões abaixo para alternar sua conta local entre <strong>Visitante Grátis (0 questões usadas)</strong> e <strong>Comprador Vitalício (R$ 47)</strong> sempre que quiser testar o funil:
             </p>
             <div className="flex flex-wrap gap-3">
@@ -2411,7 +2452,8 @@ export function PainelAdminExclusivo() {
               placeholder='[{"disciplina": "Direito Administrativo", "enunciado": "...", "alternativas": [...]}]'
               value={jsonLoteTexto}
               onChange={(e) => setJsonLoteTexto(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-mono"
+              style={{ backgroundColor: tema.fundo || '#FFFFFF', color: 'inherit' }}
+              className="w-full px-3 py-2 border border-slate-200/40 rounded-xl text-xs font-mono outline-none focus:border-indigo-500"
             />
             <button
               type="submit"
@@ -2428,7 +2470,7 @@ export function PainelAdminExclusivo() {
 }
 
 // ==========================================
-// 7. PERSONALIZADOR DE CORES COM APLICAÇÃO IMEDIATA NO DOM
+// 7. PERSONALIZADOR DE CORES COM APLICAÇÃO IMEDIATA
 // ==========================================
 const TEMAS_PRONTOS = [
   { nome: "Gelo Padrão", fundo: "#F8FAFC", cartao: "#FFFFFF", fonte: "#1E293B" },
@@ -2444,26 +2486,6 @@ export function SeletorTema() {
   const [corCartao, setCorCartao] = useState("#FFFFFF");
   const [corFonte, setCorFonte] = useState("#1E293B");
 
-  const aplicarCoresNoDOM = (fundo: string, cartao: string, fonte: string) => {
-    try {
-      document.body.style.backgroundColor = fundo;
-      document.body.style.color = fonte;
-
-      const rootEl = document.getElementById("simulado-root");
-      if (rootEl) {
-        rootEl.style.backgroundColor = fundo;
-        rootEl.style.color = fonte;
-      }
-
-      // Correção: Agora aplicamos também a cor da FONTE nos cartões!
-      document.querySelectorAll("#simulado-root header, #simulado-root aside, #simulado-root .bg-white, #simulado-root [class*='bg-white/']").forEach((el) => {
-        (el as HTMLElement).style.backgroundColor = cartao;
-        (el as HTMLElement).style.color = fonte; 
-        (el as HTMLElement).style.backgroundImage = "none";
-      });
-    } catch (e) {}
-  };
-
   useEffect(() => {
     try {
       const salvo = localStorage.getItem("simulado_tema_cores");
@@ -2473,7 +2495,8 @@ export function SeletorTema() {
           setCorFundo(parsed.fundo);
           setCorCartao(parsed.cartao);
           setCorFonte(parsed.fonte);
-          aplicarCoresNoDOM(parsed.fundo, parsed.cartao, parsed.fonte);
+          document.body.style.backgroundColor = parsed.fundo;
+          document.body.style.color = parsed.fonte;
         }
       }
     } catch (e) {}
@@ -2488,7 +2511,11 @@ export function SeletorTema() {
         "simulado_tema_cores",
         JSON.stringify({ fundo: novoFundo, cartao: novoCartao, fonte: novaFonte })
       );
-      aplicarCoresNoDOM(novoFundo, novoCartao, novaFonte);
+      document.body.style.backgroundColor = novoFundo;
+      document.body.style.color = novaFonte;
+      
+      // O NOSSO HOOK useTema VAI ESCUTAR ESTE EVENTO E ATUALIZAR TUDO MAGICA E INSTANTANEAMENTE
+      window.dispatchEvent(new Event('qpro-tema-alterado'));
     } catch (e) {}
   };
 
@@ -2497,93 +2524,97 @@ export function SeletorTema() {
       <button
         type="button"
         onClick={() => setAberto(!aberto)}
-        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200/90 bg-white text-xs font-semibold text-slate-700 hover:border-indigo-300 transition-all shadow-2xs active:scale-95"
+        className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-current opacity-70 hover:opacity-100 transition-all shadow-2xs active:scale-95"
         title="Personalizar cores de fundo e fonte"
+        style={{ backgroundColor: 'transparent', color: 'inherit' }}
       >
         <span>🎨</span>
         <span className="hidden sm:inline">Aparência</span>
       </button>
 
       {aberto && (
-        <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl z-50 text-slate-800">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+        <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-slate-200/50 shadow-xl z-50 text-slate-800" style={{ backgroundColor: corCartao, color: corFonte }}>
+          <div className="flex items-center justify-between border-b border-slate-200/30 pb-2.5 mb-3 p-4 pb-0">
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ opacity: 0.7 }}>
               Conforto Visual
             </span>
             <button
               type="button"
               onClick={() => setAberto(false)}
-              className="text-xs font-bold text-slate-400 hover:text-slate-600"
+              className="text-xs font-bold hover:opacity-70"
+              style={{ color: 'inherit' }}
             >
               ✕
             </button>
           </div>
 
-          <p className="text-xs font-semibold text-slate-600 mb-2">
-            Temas de Leitura (1 clique):
-          </p>
-          <div className="grid grid-cols-1 gap-1.5 mb-4">
-            {TEMAS_PRONTOS.map((t) => {
-              const selecionado =
-                corFundo.toLowerCase() === t.fundo.toLowerCase() &&
-                corFonte.toLowerCase() === t.fonte.toLowerCase();
-              return (
-                <button
-                  key={t.nome}
-                  type="button"
-                  onClick={() => salvarCores(t.fundo, t.cartao, t.fonte)}
-                  className={`flex items-center justify-between px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
-                    selecionado
-                      ? "border-indigo-500 ring-1 ring-indigo-500/30 font-bold"
-                      : "border-slate-200 hover:border-slate-300"
-                  }`}
-                  style={{ backgroundColor: t.fundo, color: t.fonte }}
-                >
-                  <span>{t.nome}</span>
-                  <div className="flex items-center gap-1">
-                    <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: t.fundo }} />
-                    <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: t.cartao }} />
-                    <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: t.fonte }} />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="border-t border-slate-100 pt-3">
-            <p className="text-xs font-semibold text-slate-600 mb-2.5">
-              Ou escolha sua própria cor:
+          <div className="p-4 pt-2">
+            <p className="text-xs font-semibold mb-2" style={{ opacity: 0.8 }}>
+              Temas de Leitura (1 clique):
             </p>
-            <div className="flex flex-col gap-2.5">
-              <label className="flex items-center justify-between text-xs text-slate-600 font-medium cursor-pointer">
-                <span>Cor do Fundo Geral</span>
-                <input
-                  type="color"
-                  value={corFundo}
-                  onChange={(e) => salvarCores(e.target.value, corCartao, corFonte)}
-                  className="w-8 h-7 rounded cursor-pointer border border-slate-200"
-                />
-              </label>
+            <div className="grid grid-cols-1 gap-1.5 mb-4">
+              {TEMAS_PRONTOS.map((t) => {
+                const selecionado =
+                  corFundo.toLowerCase() === t.fundo.toLowerCase() &&
+                  corFonte.toLowerCase() === t.fonte.toLowerCase();
+                return (
+                  <button
+                    key={t.nome}
+                    type="button"
+                    onClick={() => salvarCores(t.fundo, t.cartao, t.fonte)}
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
+                      selecionado
+                        ? "border-indigo-500 ring-1 ring-indigo-500/30 font-bold"
+                        : "border-transparent opacity-80 hover:opacity-100"
+                    }`}
+                    style={{ backgroundColor: t.fundo, color: t.fonte, borderColor: selecionado ? undefined : 'rgba(0,0,0,0.1)' }}
+                  >
+                    <span>{t.nome}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: t.fundo }} />
+                      <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: t.cartao }} />
+                      <span className="w-4 h-4 rounded-full border border-black/10" style={{ backgroundColor: t.fonte }} />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
 
-              <label className="flex items-center justify-between text-xs text-slate-600 font-medium cursor-pointer">
-                <span>Cor dos Cartões</span>
-                <input
-                  type="color"
-                  value={corCartao}
-                  onChange={(e) => salvarCores(corFundo, e.target.value, corFonte)}
-                  className="w-8 h-7 rounded cursor-pointer border border-slate-200"
-                />
-              </label>
+            <div className="border-t border-slate-200/30 pt-3">
+              <p className="text-xs font-semibold mb-2.5" style={{ opacity: 0.8 }}>
+                Ou escolha sua própria cor:
+              </p>
+              <div className="flex flex-col gap-2.5">
+                <label className="flex items-center justify-between text-xs font-medium cursor-pointer">
+                  <span>Cor do Fundo Geral</span>
+                  <input
+                    type="color"
+                    value={corFundo}
+                    onChange={(e) => salvarCores(e.target.value, corCartao, corFonte)}
+                    className="w-8 h-7 rounded cursor-pointer border border-slate-200/50"
+                  />
+                </label>
 
-              <label className="flex items-center justify-between text-xs text-slate-600 font-medium cursor-pointer">
-                <span>Cor da Fonte (Texto)</span>
-                <input
-                  type="color"
-                  value={corFonte}
-                  onChange={(e) => salvarCores(corFundo, corCartao, e.target.value)}
-                  className="w-8 h-7 rounded cursor-pointer border border-slate-200"
-                />
-              </label>
+                <label className="flex items-center justify-between text-xs font-medium cursor-pointer">
+                  <span>Cor dos Cartões</span>
+                  <input
+                    type="color"
+                    value={corCartao}
+                    onChange={(e) => salvarCores(corFundo, e.target.value, corFonte)}
+                    className="w-8 h-7 rounded cursor-pointer border border-slate-200/50"
+                  />
+                </label>
+
+                <label className="flex items-center justify-between text-xs font-medium cursor-pointer">
+                  <span>Cor da Fonte (Texto)</span>
+                  <input
+                    type="color"
+                    value={corFonte}
+                    onChange={(e) => salvarCores(corFundo, corCartao, e.target.value)}
+                    className="w-8 h-7 rounded cursor-pointer border border-slate-200/50"
+                  />
+                </label>
+              </div>
             </div>
           </div>
         </div>
