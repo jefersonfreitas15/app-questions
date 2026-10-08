@@ -400,6 +400,7 @@ export function QuestionCard({
   const [isAnswered, setIsAnswered] = useState(false);
   const [showComment, setShowComment] = useState(false);
   const [entered, setEntered] = useState(false);
+  const [corCartao, setCorCartao] = useState<string | undefined>(undefined);
 
   const [eliminadas, setEliminadas] = useState<Record<string, boolean>>({});
   const [isFavorita, setIsFavorita] = useState(false);
@@ -414,6 +415,10 @@ export function QuestionCard({
     setIsAnswered(false);
     setShowComment(false);
     setEliminadas({});
+    try {
+      const salvo = localStorage.getItem("simulado_tema_cores");
+      if (salvo) setCorCartao(JSON.parse(salvo).cartao);
+    } catch (e) {}
 
     if (question?.id !== undefined) {
       const qId = String(question.id);
@@ -589,9 +594,10 @@ export function QuestionCard({
 
   return (
     <div
-      className={`bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-8 shadow-xs transition-all duration-300 ease-out ${
+      className={`border border-slate-200/50 rounded-2xl p-5 sm:p-8 shadow-xs transition-all duration-300 ease-out ${
         entered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
       }`}
+      style={{ backgroundColor: corCartao || 'transparent' }}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
         <div className="flex flex-wrap gap-2">
