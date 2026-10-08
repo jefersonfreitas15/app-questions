@@ -261,9 +261,9 @@ export function PainelDesempenho({
           <span className="text-[11px] font-bold text-indigo-600 uppercase tracking-wide">
             Resolvidas
           </span>
-          <p className="text-2xl font-extrabold text-slate-800 mt-1">
-            {totalRespondidas}
-          </p>
+          <p className="text-2xl font-extrabold mt-1" style={{ color: 'inherit' }}>
+  {totalRespondidas}
+</p>
         </div>
 
         <div className="bg-white border border-emerald-200 rounded-2xl p-4 shadow-xs transition-all hover:-translate-y-0.5">
@@ -289,9 +289,9 @@ export function PainelDesempenho({
             <span className="text-[11px] font-bold text-violet-600 uppercase tracking-wide">
               Aproveitamento
             </span>
-            <p className="text-2xl font-extrabold text-slate-800 mt-1">
-              {taxaAcerto}%
-            </p>
+            <p className="text-2xl font-extrabold mt-1" style={{ color: 'inherit' }}>
+  {taxaAcerto}%
+</p>
           </div>
           <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2">
             <div
@@ -1217,17 +1217,18 @@ export function CadernoQuestoes({
 
                 return (
                   <button
-                    key={`page-${pageIndex}`}
-                    type="button"
-                    onClick={() => atualizarIndiceAtual(pageIndex)}
-                    className={`min-w-9 h-9 px-2.5 rounded-xl text-xs font-bold transition-all duration-200 active:scale-90 border ${
-                      ativo
-                        ? 'bg-gradient-to-tr from-indigo-600 to-violet-500 text-white border-indigo-600 shadow-sm shadow-indigo-200 scale-105'
-                        : 'bg-slate-50 text-slate-600 border-slate-200/80 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200'
-                    }`}
-                  >
-                    {(pageIndex + 1).toLocaleString('pt-BR')}
-                  </button>
+  key={`page-${pageIndex}`}
+  type="button"
+  onClick={() => atualizarIndiceAtual(pageIndex)}
+  className={`min-w-9 h-9 px-2.5 rounded-xl text-xs font-bold transition-all duration-200 active:scale-90 border ${
+    ativo
+      ? 'bg-gradient-to-tr from-indigo-600 to-violet-500 text-white border-indigo-600 shadow-sm shadow-indigo-200 scale-105'
+      : 'border-current opacity-60 hover:opacity-100 hover:border-indigo-400 hover:text-indigo-400'
+  }`}
+  style={!ativo ? { backgroundColor: 'transparent', color: 'inherit' } : undefined}
+>
+  {(pageIndex + 1).toLocaleString('pt-BR')}
+</button>
                 );
               })}
             </div>
