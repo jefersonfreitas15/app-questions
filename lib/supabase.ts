@@ -1,9 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Se estiver no navegador, usa o túnel da Vercel. 
-// Se estiver no servidor/build, usa o URL real das variáveis de ambiente.
+// Cria o URL absoluto dinamicamente no navegador, ou usa o URL do servidor
 const supabaseUrl = typeof window !== 'undefined' 
-  ? '/api-banco' 
+  ? `${window.location.origin}/api-banco` 
   : process.env.NEXT_PUBLIC_SUPABASE_URL!;
 
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
