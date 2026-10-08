@@ -176,7 +176,8 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
           <Button
             variant="outline"
             onClick={handleClear}
-            className="mt-2 w-full gap-2 text-xs font-semibold text-slate-600 border-slate-200 hover:bg-slate-50 hover:text-rose-600"
+            className="mt-2 w-full gap-2 text-xs font-semibold border-current opacity-70 hover:opacity-100 transition-opacity"
+            style={{ backgroundColor: 'transparent', color: 'inherit' }}
           >
             <RotateCcw className="size-3.5" />
             Limpar Filtros

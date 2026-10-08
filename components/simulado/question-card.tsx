@@ -637,9 +637,9 @@ export function QuestionCard({
         </button>
       </div>
 
-      <h2 className="text-base sm:text-lg text-slate-800 mb-7 leading-relaxed font-medium text-justify">
-        {enunciadoExibido}
-      </h2>
+      <h2 className="text-base sm:text-lg mb-7 leading-relaxed font-medium text-justify" style={{ color: 'inherit' }}>
+  {enunciadoExibido}
+</h2>
 
       <div className="flex flex-col gap-3 mb-6">
         {alternativas.map((alt: any, index: number) => {
@@ -2447,8 +2447,10 @@ export function SeletorTema() {
         rootEl.style.color = fonte;
       }
 
+      // Correção: Agora aplicamos também a cor da FONTE nos cartões!
       document.querySelectorAll("#simulado-root header, #simulado-root aside, #simulado-root .bg-white, #simulado-root [class*='bg-white/']").forEach((el) => {
         (el as HTMLElement).style.backgroundColor = cartao;
+        (el as HTMLElement).style.color = fonte; 
         (el as HTMLElement).style.backgroundImage = "none";
       });
     } catch (e) {}
