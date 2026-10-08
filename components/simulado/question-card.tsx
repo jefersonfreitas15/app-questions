@@ -651,7 +651,7 @@ export function QuestionCard({
           const textoAlternativa = limparMathML(alt.texto || alt.enunciado || alt.descricao || '');
 
           let containerClasses =
-            'border-slate-200/90 text-slate-700 hover:border-indigo-300 hover:bg-indigo-50/30 hover:-translate-y-0.5 hover:shadow-xs';
+  'border-slate-200/50 hover:border-indigo-400 hover:-translate-y-0.5 hover:shadow-sm';
           let badgeClasses = 'bg-slate-100 text-slate-600 border-slate-200';
 
           if (isEliminada) {
@@ -694,12 +694,13 @@ export function QuestionCard({
                   {letra}
                 </span>
                 <span
-                  className={`text-sm sm:text-base leading-snug text-justify ${
-                    isEliminada ? 'line-through select-none' : ''
-                  }`}
-                >
-                  {textoAlternativa}
-                </span>
+  className={`text-sm sm:text-base leading-snug text-justify ${
+    isEliminada ? 'line-through select-none' : ''
+  }`}
+  style={(!isAnswered && !isSelected && !isEliminada) ? { color: 'inherit' } : undefined}
+>
+  {textoAlternativa}
+</span>
               </div>
 
               {!isAnswered && (
