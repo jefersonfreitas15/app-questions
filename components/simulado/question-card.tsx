@@ -2270,13 +2270,44 @@ export function PainelAdminExclusivo() {
     setSucessoMsg('');
     try {
       const parsed = JSON.parse(jsonLoteTexto);
-      const lista = Array.isArray(parsed) ? parsed : [parsed];
+      const listaBruta = Array.isArray(parsed) ? parsed : [parsed];
+
+      // LÓGICA DE TRADUÇÃO: Converte o formato CSV do Freelancer para o formato do Supabase
+      const listaFormatada = listaBruta.map((q: any) => {
+        // Verifica se os dados vêm no formato do freelancer (com as colunas Alternativa_A, Gabarito, etc.)
+        if (q.Alternativa_A || q.alternativa_a || q.Gabarito || q.gabarito) {
+          const gabarito = String(q.Gabarito || q.gabarito || '').trim().toUpperCase();
+
+          // Monta o array de alternativas dinamicamente e marca a correta
+          const alts = [];
+          if (q.Alternativa_A || q.alternativa_a) alts.push({ texto: q.Alternativa_A || q.alternativa_a, is_correta: gabarito === 'A' });
+          if (q.Alternativa_B || q.alternativa_b) alts.push({ texto: q.Alternativa_B || q.alternativa_b, is_correta: gabarito === 'B' });
+          if (q.Alternativa_C || q.alternativa_c) alts.push({ texto: q.Alternativa_C || q.alternativa_c, is_correta: gabarito === 'C' });
+          if (q.Alternativa_D || q.alternativa_d) alts.push({ texto: q.Alternativa_D || q.alternativa_d, is_correta: gabarito === 'D' });
+          if (q.Alternativa_E || q.alternativa_e) alts.push({ texto: q.Alternativa_E || q.alternativa_e, is_correta: gabarito === 'E' });
+
+          return {
+            banca: q.Banca || q.banca || '',
+            orgao: q.Orgao || q.orgao || '',
+            ano: q.Ano || q.ano || 0,
+            disciplina: q.Disciplina || q.disciplina || q.Assunto || q.assunto || 'Geral',
+            assunto: q.Assunto || q.assunto || '',
+            enunciado: q.Enunciado || q.enunciado || '',
+            explicacao: q.Comentario_Professor || q.comentario_professor || q.Comentario || q.explicacao || '',
+            alternativas: alts
+          };
+        }
+        
+        // Se já vier no formato antigo/correto, passa direto
+        return q;
+      });
+
       setSalvando(true);
-      await gravarListaDeQuestoesNoBanco(lista);
+      await gravarListaDeQuestoesNoBanco(listaFormatada);
       setJsonLoteTexto('');
-      setSucessoMsg(`✅ Lote JSON com ${lista.length} questões importado com sucesso!`);
+      setSucessoMsg(`✅ Lote com ${listaFormatada.length} questões traduzido e importado com sucesso!`);
     } catch (err: any) {
-      setErroMsg('Erro no JSON: ' + (err.message || 'Formato inválido.'));
+      setErroMsg('Erro na importação: ' + (err.message || 'Verifique o formato do texto colado.'));
     } finally {
       setSalvando(false);
     }
