@@ -2237,7 +2237,7 @@ export function PainelAdminExclusivo() {
   const [salvando, setSalvando] = useState(false);
   const [erroMsg, setErroMsg] = useState('');
   const [sucessoMsg, setSucessoMsg] = useState('');
-  const [jsonLoteTexto, setJsonLoteTexto] = useState('');
+  const [arquivoJson, setArquivoJson] = useState<File | null>(null);
 
   useEffect(() => {
     try {
@@ -2264,53 +2264,58 @@ export function PainelAdminExclusivo() {
     setSenha('');
   };
 
-  const handleImportarJsonColado = async (e: React.FormEvent) => {
+  const handleImportarArquivoJson = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!arquivoJson) {
+      setErroMsg('Por favor, selecione um ficheiro JSON.');
+      return;
+    }
     setErroMsg('');
     setSucessoMsg('');
-    try {
-      const parsed = JSON.parse(jsonLoteTexto);
-      const listaBruta = Array.isArray(parsed) ? parsed : [parsed];
+    setSalvando(true);
 
-      // LÓGICA DE TRADUÇÃO: Converte o formato CSV do Freelancer para o formato do Supabase
-      const listaFormatada = listaBruta.map((q: any) => {
-        // Verifica se os dados vêm no formato do freelancer (com as colunas Alternativa_A, Gabarito, etc.)
-        if (q.Alternativa_A || q.alternativa_a || q.Gabarito || q.gabarito) {
-          const gabarito = String(q.Gabarito || q.gabarito || '').trim().toUpperCase();
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const texto = event.target?.result as string;
+        const parsed = JSON.parse(texto);
+        const listaBruta = Array.isArray(parsed) ? parsed : [parsed];
 
-          // Monta o array de alternativas dinamicamente e marca a correta
-          const alts = [];
-          if (q.Alternativa_A || q.alternativa_a) alts.push({ texto: q.Alternativa_A || q.alternativa_a, is_correta: gabarito === 'A' });
-          if (q.Alternativa_B || q.alternativa_b) alts.push({ texto: q.Alternativa_B || q.alternativa_b, is_correta: gabarito === 'B' });
-          if (q.Alternativa_C || q.alternativa_c) alts.push({ texto: q.Alternativa_C || q.alternativa_c, is_correta: gabarito === 'C' });
-          if (q.Alternativa_D || q.alternativa_d) alts.push({ texto: q.Alternativa_D || q.alternativa_d, is_correta: gabarito === 'D' });
-          if (q.Alternativa_E || q.alternativa_e) alts.push({ texto: q.Alternativa_E || q.alternativa_e, is_correta: gabarito === 'E' });
+        // LÓGICA DE TRADUÇÃO DO FREELANCER PARA O SUPABASE
+        const listaFormatada = listaBruta.map((q: any) => {
+          if (q.Alternativa_A || q.alternativa_a || q.Gabarito || q.gabarito) {
+            const gabarito = String(q.Gabarito || q.gabarito || '').trim().toUpperCase();
+            const alts = [];
+            if (q.Alternativa_A || q.alternativa_a) alts.push({ texto: q.Alternativa_A || q.alternativa_a, is_correta: gabarito === 'A' });
+            if (q.Alternativa_B || q.alternativa_b) alts.push({ texto: q.Alternativa_B || q.alternativa_b, is_correta: gabarito === 'B' });
+            if (q.Alternativa_C || q.alternativa_c) alts.push({ texto: q.Alternativa_C || q.alternativa_c, is_correta: gabarito === 'C' });
+            if (q.Alternativa_D || q.alternativa_d) alts.push({ texto: q.Alternativa_D || q.alternativa_d, is_correta: gabarito === 'D' });
+            if (q.Alternativa_E || q.alternativa_e) alts.push({ texto: q.Alternativa_E || q.alternativa_e, is_correta: gabarito === 'E' });
 
-          return {
-            banca: q.Banca || q.banca || '',
-            orgao: q.Orgao || q.orgao || '',
-            ano: q.Ano || q.ano || 0,
-            disciplina: q.Disciplina || q.disciplina || q.Assunto || q.assunto || 'Geral',
-            assunto: q.Assunto || q.assunto || '',
-            enunciado: q.Enunciado || q.enunciado || '',
-            explicacao: q.Comentario_Professor || q.comentario_professor || q.Comentario || q.explicacao || '',
-            alternativas: alts
-          };
-        }
-        
-        // Se já vier no formato antigo/correto, passa direto
-        return q;
-      });
+            return {
+              banca: q.Banca || q.banca || '',
+              orgao: q.Orgao || q.orgao || '',
+              ano: q.Ano || q.ano || 0,
+              disciplina: q.Disciplina || q.disciplina || q.Assunto || q.assunto || 'Geral',
+              assunto: q.Assunto || q.assunto || '',
+              enunciado: q.Enunciado || q.enunciado || '',
+              explicacao: q.Comentario_Professor || q.comentario_professor || q.Comentario || q.explicacao || '',
+              alternativas: alts
+            };
+          }
+          return q;
+        });
 
-      setSalvando(true);
-      await gravarListaDeQuestoesNoBanco(listaFormatada);
-      setJsonLoteTexto('');
-      setSucessoMsg(`✅ Lote com ${listaFormatada.length} questões traduzido e importado com sucesso!`);
-    } catch (err: any) {
-      setErroMsg('Erro na importação: ' + (err.message || 'Verifique o formato do texto colado.'));
-    } finally {
-      setSalvando(false);
-    }
+        await gravarListaDeQuestoesNoBanco(listaFormatada);
+        setSucessoMsg(`✅ Lote com ${listaFormatada.length} questões importado com sucesso!`);
+        setArquivoJson(null);
+      } catch (err: any) {
+        setErroMsg('Erro na importação: ' + (err.message || 'Ficheiro inválido.'));
+      } finally {
+        setSalvando(false);
+      }
+    };
+    reader.readAsText(arquivoJson);
   };
 
   if (!autenticado) {
@@ -2476,22 +2481,25 @@ export function PainelAdminExclusivo() {
         )}
 
         {abaAtiva === 'json' && (
-          <form onSubmit={handleImportarJsonColado} className="flex flex-col gap-4">
-            <textarea
-              rows={10}
-              required
-              placeholder='[{"disciplina": "Direito Administrativo", "enunciado": "...", "alternativas": [...]}]'
-              value={jsonLoteTexto}
-              onChange={(e) => setJsonLoteTexto(e.target.value)}
-              style={{ backgroundColor: tema.fundo || '#FFFFFF', color: 'inherit' }}
-              className="w-full px-3 py-2 border border-slate-200/40 rounded-xl text-xs font-mono outline-none focus:border-indigo-500"
-            />
+          <form onSubmit={handleImportarArquivoJson} className="flex flex-col gap-4">
+            <div className="p-4 border border-slate-200/50 rounded-xl" style={{ backgroundColor: tema.fundo || '#FFFFFF' }}>
+              <label className="block text-xs font-bold uppercase mb-2" style={{ opacity: 0.8 }}>
+                Selecione o ficheiro JSON convertido
+              </label>
+              <input
+                type="file"
+                accept=".json"
+                onChange={(e) => setArquivoJson(e.target.files?.[0] || null)}
+                style={{ color: 'inherit' }}
+                className="w-full text-sm outline-none"
+              />
+            </div>
             <button
               type="submit"
-              disabled={salvando}
+              disabled={salvando || !arquivoJson}
               className="self-end px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 disabled:opacity-50"
             >
-              {salvando ? 'Importando...' : 'Importar Lote JSON'}
+              {salvando ? 'A processar e a importar...' : 'Importar Ficheiro JSON'}
             </button>
           </form>
         )}
