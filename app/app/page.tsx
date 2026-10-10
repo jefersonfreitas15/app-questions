@@ -24,7 +24,6 @@ export default async function Page({
 
   const temFiltroAtivo = Boolean(banca || orgao || ano || disciplina || assunto);
 
-  // 1. Busca das questões filtradas com contagem exata no banco
   let query = supabase
     .from("questoes")
     .select("*, alternativas(*)", { count: "exact" })
@@ -37,7 +36,6 @@ export default async function Page({
   if (disciplina) query = query.eq("disciplina", disciplina);
   if (assunto) query = query.eq("assunto", assunto);
 
-  // 2. Cruzamento dinâmico dos filtros em cascata (sem depender de alteração no SQL)
   const buscarMetadadosCascata = async () => {
     const criarQueryMeta = (ignorarCampo: string) => {
       let q = supabase
@@ -97,12 +95,13 @@ export default async function Page({
 
   const opcoesData = temFiltroAtivo ? opcoesCascata : opcoesBaseRes.data;
 
+  // Garante que todos os arrays são passados corretamente para alimentar o Cache do Cliente
   const opcoesDoBanco = {
-    banca: opcoesData?.banca || [],
-    orgao: opcoesData?.orgao || [],
-    ano: (opcoesData?.ano || []).map(String),
-    disciplina: opcoesData?.disciplina || [],
-    assunto: opcoesData?.assunto || [],
+    banca: Array.isArray(opcoesData?.banca) ? opcoesData.banca : [],
+    orgao: Array.isArray(opcoesData?.orgao) ? opcoesData.orgao : [],
+    ano: Array.isArray(opcoesData?.ano) ? opcoesData.ano.map(String) : [],
+    disciplina: Array.isArray(opcoesData?.disciplina) ? opcoesData.disciplina : [],
+    assunto: Array.isArray(opcoesData?.assunto) ? opcoesData.assunto : [],
   };
 
   const initialRespostas = respostasRes.data || [];
@@ -112,10 +111,8 @@ export default async function Page({
       id="simulado-root"
       className="min-h-svh bg-[#F8FAFC] text-slate-900 transition-colors duration-200"
     >
-      {/* Cabeçalho com a Identidade Visual Qpro Concursos */}
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white">
         <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-3.5">
-          {/* Logo e Título */}
           <div className="flex items-center justify-between sm:justify-start gap-3.5">
             <div className="flex items-center gap-3.5">
               <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-200/80">
@@ -163,13 +160,11 @@ export default async function Page({
               </div>
             </div>
 
-            {/* Ações visíveis apenas em mobile ao lado do logo se houver espaço, ou integradas */}
             <div className="flex sm:hidden items-center gap-1.5">
               <SeletorTema />
             </div>
           </div>
 
-          {/* Botões de Ação (Responsivos: linha em telas médias/grandes, ajustados em telemóvel) */}
           <div className="flex items-center justify-between sm:justify-end gap-2 pt-1 sm:pt-0 border-t border-slate-100 sm:border-0">
             <div className="hidden sm:flex items-center gap-2">
               <SeletorTema />
@@ -181,7 +176,6 @@ export default async function Page({
         </div>
       </header>
 
-      {/* Conteúdo Principal */}
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         <PainelDesempenho
           initialRespostas={initialRespostas}

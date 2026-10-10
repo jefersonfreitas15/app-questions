@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,21 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
   const [isPending, startTransition] = useTransition();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  // Barreira de Cache para Soft Navigation do Next.js
+  const [cachedOptions, setCachedOptions] = useState<DbFilterOptions>({
+    banca: [], orgao: [], ano: [], disciplina: [], assunto: []
+  });
+
+  useEffect(() => {
+    if (dbOptions) {
+      // Só atualiza a memória se o servidor enviou dados reais (suporta o efeito cascata)
+      const temDadosValidos = Object.values(dbOptions).some(arr => Array.isArray(arr) && arr.length > 0);
+      if (temDadosValidos) {
+        setCachedOptions(dbOptions);
+      }
+    }
+  }, [dbOptions]);
+
   const selected: Record<FilterKey, string> = {
     banca: searchParams.get("banca") || "",
     orgao: searchParams.get("orgao") || "",
@@ -49,16 +64,7 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
     assunto: searchParams.get("assunto") || "",
   };
 
-  const filterOptions: Record<FilterKey, string[]> = {
-    banca: dbOptions?.banca || [],
-    orgao: dbOptions?.orgao || [],
-    ano: dbOptions?.ano || [],
-    disciplina: dbOptions?.disciplina || [],
-    assunto: dbOptions?.assunto || [],
-  };
-
   const handleSelectChange = (key: FilterKey, val: string) => {
-    // Intercetamos a chave de limpeza e convertemos num valor vazio seguro
     const cleanVal = val === "___limpar___" ? "" : val;
     const params = new URLSearchParams(searchParams.toString());
 
@@ -107,13 +113,9 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
           className="flex items-center gap-1 text-xs font-bold text-indigo-600 lg:hidden hover:text-indigo-800 transition-colors"
         >
           {mobileOpen ? (
-            <>
-              Ocultar <ChevronUp className="size-3.5" />
-            </>
+            <>Ocultar <ChevronUp className="size-3.5" /></>
           ) : (
-            <>
-              Expandir <ChevronDown className="size-3.5" />
-            </>
+            <>Expandir <ChevronDown className="size-3.5" /></>
           )}
         </button>
       </div>
@@ -124,7 +126,7 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
         } ${mobileOpen ? "flex" : "hidden lg:flex"}`}
       >
         {filters.map((filter) => {
-          const options = filterOptions[filter.key] || [];
+          const options = cachedOptions[filter.key] || [];
           const valorAtual = selected[filter.key];
 
           return (
@@ -134,7 +136,6 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
               </Label>
               
               <Select
-                // O truque do React: forçar a reconstrução do componente ao limpar o valor
                 key={valorAtual || `vazio-${filter.key}`}
                 value={valorAtual || undefined}
                 onValueChange={(val: any) => handleSelectChange(filter.key, String(val))}
@@ -144,7 +145,6 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 text-slate-700 max-h-[300px]">
                   
-                  {/* Opção dedicada invisível para forçar a limpeza segura */}
                   <SelectItem value="___limpar___" className="font-semibold text-slate-400">
                     {filter.placeholder}
                   </SelectItem>
