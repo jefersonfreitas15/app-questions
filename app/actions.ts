@@ -1,15 +1,25 @@
 "use server";
 
-import { supabase } from '@/lib/supabase';
-import { revalidatePath } from 'next/cache';
+import { supabaseServer } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 
 export async function salvarRespostaNoBanco(
   questaoId: string,
   alternativaId: string,
   acertou: boolean
 ) {
-  const { error } = await supabase.from('respostas_usuario').insert([
+  const supabase = await supabaseServer();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, mensagem: "Usuário não autenticado." };
+  }
+
+  const { error } = await supabase.from("respostas_usuarios").insert([
     {
+      usuario_id: user.id,
       questao_id: questaoId,
       alternativa_id: alternativaId,
       acertou: acertou,
@@ -17,11 +27,10 @@ export async function salvarRespostaNoBanco(
   ]);
 
   if (error) {
-    console.log(">>> DETALHE DO SUPABASE NO TERMINAL:", error.message);
+    console.error("Erro ao salvar resposta:", error.message);
     return { ok: false, mensagem: error.message };
   }
 
-  // Atualiza os cartões de Resolvidas, Acertos, Erros e % na hora!
-  revalidatePath('/');
+  revalidatePath("/app");
   return { ok: true };
 }
