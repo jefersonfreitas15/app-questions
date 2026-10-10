@@ -61,11 +61,8 @@ export async function GET(request: NextRequest) {
       return response;
     }
 
-        console.error("Erro no verifyOtp:", error.message);
-    return NextResponse.redirect(
-      new URL(`/login?erro=${encodeURIComponent(error.message)}`, request.url)
-    );
+            console.error("Erro no verifyOtp:", error.message);
   }
 
-  return NextResponse.redirect(new URL("/login?erro=sem_token", request.url));
+  return NextResponse.redirect(new URL("/login?erro=link_expirado", request.url));
 }
