@@ -132,7 +132,7 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
               </Label>
               
               <Select
-                value={selected[filter.key] || "__all__"}
+                value={selected[filter.key] && selected[filter.key] !== "" ? selected[filter.key] : "__all__"}
                 onValueChange={(val: any) => handleSelectChange(filter.key, String(val))}
               >
                 <SelectTrigger id={filter.key} className="w-full border border-current opacity-80" style={{ backgroundColor: 'transparent', color: 'inherit' }}>
