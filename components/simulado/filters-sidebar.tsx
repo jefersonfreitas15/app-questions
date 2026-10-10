@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useTransition, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,23 +41,14 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
   const [isPending, startTransition] = useTransition();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const [selected, setSelected] = useState<Record<FilterKey, string>>({
+  // Tipagem estrita adicionada para prevenir erros de inferência "any"
+  const selected: Record<FilterKey, string> = {
     banca: searchParams.get("banca") || "",
     orgao: searchParams.get("orgao") || "",
     ano: searchParams.get("ano") || "",
     disciplina: searchParams.get("disciplina") || "",
     assunto: searchParams.get("assunto") || "",
-  });
-
-  useEffect(() => {
-    setSelected({
-      banca: searchParams.get("banca") || "",
-      orgao: searchParams.get("orgao") || "",
-      ano: searchParams.get("ano") || "",
-      disciplina: searchParams.get("disciplina") || "",
-      assunto: searchParams.get("assunto") || "",
-    });
-  }, [searchParams]);
+  };
 
   const filterOptions: Record<FilterKey, string[]> = {
     banca: dbOptions?.banca || [],
@@ -67,43 +58,33 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
     assunto: dbOptions?.assunto || [],
   };
 
-  const handleSelectChange = (key: FilterKey, val: string | null | undefined) => {
-    const rawVal = val ?? "";
-    const filterDef = filters.find((f) => f.key === key);
-    const cleanVal =
-      rawVal === "todos" || rawVal === filterDef?.placeholder ? "" : rawVal;
+  const handleSelectChange = (key: FilterKey, val: string) => {
+    const cleanVal = val === "__all__" ? "" : val;
+    const params = new URLSearchParams(searchParams.toString());
 
-    const nextSelected = { ...selected, [key]: cleanVal };
-
-    if (key === "disciplina" && selected.assunto) {
-      nextSelected.assunto = "";
+    if (cleanVal) {
+      params.set(key, cleanVal);
+    } else {
+      params.delete(key);
     }
 
-    setSelected(nextSelected);
+    if (key === "disciplina" && params.has("assunto")) {
+      params.delete("assunto");
+    }
 
-    const params = new URLSearchParams();
-    (Object.keys(nextSelected) as FilterKey[]).forEach((k) => {
-      if (nextSelected[k]) {
-        params.set(k, nextSelected[k]);
-      }
-    });
+    if (params.has("page")) {
+      params.delete("page");
+    }
 
     startTransition(() => {
       const qs = params.toString();
-      router.push(qs ? `/app?${qs}` : "/app"); 
+      router.push(qs ? `/app?${qs}` : "/app");
     });
   };
 
   const handleClear = () => {
-    setSelected({
-      banca: "",
-      orgao: "",
-      ano: "",
-      disciplina: "",
-      assunto: "",
-    });
     startTransition(() => {
-      router.push("/app"); 
+      router.push("/app");
     });
   };
 
@@ -149,18 +130,19 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
               <Label htmlFor={filter.key} className="text-xs font-semibold" style={{ color: 'inherit', opacity: 0.8 }}>
                 {filter.label}
               </Label>
-              {/* O erro estava na key do Select abaixo. Agora está fixa! */}
+              
               <Select
-                value={selected[filter.key] || undefined}
-                onValueChange={(val) => handleSelectChange(filter.key, val ?? "")}
+                value={selected[filter.key] || "__all__"}
+                onValueChange={(val: any) => handleSelectChange(filter.key, String(val))}
               >
                 <SelectTrigger id={filter.key} className="w-full border border-current opacity-80" style={{ backgroundColor: 'transparent', color: 'inherit' }}>
                   <SelectValue placeholder={filter.placeholder} />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-slate-200 text-slate-700">
-                  <SelectItem value={filter.placeholder}>
+                <SelectContent className="bg-white border-slate-200 text-slate-700 max-h-[300px]">
+                  <SelectItem value="__all__" className="font-semibold text-slate-400">
                     {filter.placeholder}
                   </SelectItem>
+                  
                   {options.map((option) => (
                     <SelectItem key={option} value={option}>
                       {option}
