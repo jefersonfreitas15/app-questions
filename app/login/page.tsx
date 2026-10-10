@@ -8,15 +8,19 @@ export default function Login() {
   const [enviado, setEnviado] = useState(false);
   const [carregando, setCarregando] = useState(false);
 
-  async function entrar(e: React.FormEvent) {
+    async function entrar(e: React.FormEvent) {
     e.preventDefault();
     setCarregando(true);
-    await supabaseBrowser().auth.signInWithOtp({
-      email: email.trim().toLowerCase(),
-      options: { shouldCreateUser: false },
-    });
-    setEnviado(true); // mensagem igual, exista a conta ou não
-    setCarregando(false);
+    try {
+      await fetch("/api/login-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+    } finally {
+      setEnviado(true); // mensagem igual, exista a conta ou não
+      setCarregando(false);
+    }
   }
 
   return (
