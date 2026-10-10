@@ -1,7 +1,7 @@
 "use client";
 
-import { useTransition, useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useTransition, useState } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { SlidersHorizontal, RotateCcw, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTema } from "./tema-context";
 
 export interface DbFilterOptions {
   banca: string[];
@@ -36,30 +37,13 @@ const filters = [
 type FilterKey = (typeof filters)[number]["key"];
 
 export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
+  const tema = useTema();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Barreira de Cache contra Soft Navigation
-  const [cachedOptions, setCachedOptions] = useState<DbFilterOptions>({
-    banca: [], orgao: [], ano: [], disciplina: [], assunto: []
-  });
-
-  useEffect(() => {
-    if (dbOptions) {
-      const temDadosValidos = Object.values(dbOptions).some(
-        (arr) => Array.isArray(arr) && arr.length > 0
-      );
-      if (temDadosValidos) {
-        setCachedOptions(dbOptions);
-      }
-    }
-  }, [dbOptions]);
-
-  // =================================================================
-  // FILTRO DE SEGURANÇA: Limpa lixos que tenham ficado presos na URL
-  // =================================================================
   const lerParametroSeguro = (key: string) => {
     const val = searchParams.get(key) || "";
     if (val === "___all___" || val === "___limpar___" || val === "vazio") return "";
@@ -75,7 +59,6 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
   };
 
   const handleSelectChange = (key: FilterKey, val: string) => {
-    // Agora usamos a palavra "vazio" como chave padrão de limpeza
     const cleanVal = val === "vazio" ? "" : val;
     const params = new URLSearchParams(searchParams.toString());
 
@@ -95,24 +78,30 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
 
     startTransition(() => {
       const qs = params.toString();
-      router.push(qs ? `/app?${qs}` : "/app");
+      router.push(qs ? `${pathname}?${qs}` : pathname);
     });
   };
 
   const handleClear = () => {
     startTransition(() => {
-      router.push("/app");
+      router.push(pathname);
     });
   };
 
   const hasActiveFilters = Object.values(selected).some(Boolean);
 
   return (
-    <aside className="rounded-xl border border-slate-200 bg-white p-5 lg:sticky lg:top-6 shadow-sm">
-      <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+    <aside
+      className="rounded-2xl border border-slate-200/50 p-5 lg:sticky lg:top-20 shadow-xs transition-colors duration-200"
+      style={{
+        backgroundColor: tema.cartao || "#FFFFFF",
+        color: tema.fonte || "inherit",
+      }}
+    >
+      <div className="flex items-center justify-between pb-4 border-b border-slate-200/30 mb-4">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal className="size-4 text-slate-500" />
-          <h2 className="text-sm font-bold" style={{ color: 'inherit' }}>Filtros</h2>
+          <SlidersHorizontal className="size-4 opacity-70" />
+          <h2 className="text-sm font-bold">Filtros</h2>
           {isPending && (
             <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
           )}
@@ -121,12 +110,16 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
         <button
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="flex items-center gap-1 text-xs font-bold text-indigo-600 lg:hidden hover:text-indigo-800 transition-colors"
+          className="flex items-center gap-1 text-xs font-bold text-indigo-600 lg:hidden hover:opacity-80 transition-opacity"
         >
           {mobileOpen ? (
-            <>Ocultar <ChevronUp className="size-3.5" /></>
+            <>
+              Ocultar <ChevronUp className="size-3.5" />
+            </>
           ) : (
-            <>Expandir <ChevronDown className="size-3.5" /></>
+            <>
+              Expandir <ChevronDown className="size-3.5" />
+            </>
           )}
         </button>
       </div>
@@ -137,30 +130,46 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
         } ${mobileOpen ? "flex" : "hidden lg:flex"}`}
       >
         {filters.map((filter) => {
-          const options = cachedOptions[filter.key] || [];
+          const options = dbOptions?.[filter.key] || [];
           const valorAtual = selected[filter.key];
 
           return (
-             <div key={filter.key} className="flex flex-col gap-1.5">
-              <Label htmlFor={filter.key} className="text-xs font-semibold" style={{ color: 'inherit', opacity: 0.8 }}>
+            <div key={filter.key} className="flex flex-col gap-1.5">
+              <Label
+                htmlFor={filter.key}
+                className="text-xs font-semibold opacity-80"
+              >
                 {filter.label}
               </Label>
-              
+
               <Select
                 key={valorAtual || `reset-${filter.key}`}
                 value={valorAtual || undefined}
-                onValueChange={(val: any) => handleSelectChange(filter.key, String(val))}
+                onValueChange={(val: any) =>
+                  handleSelectChange(filter.key, String(val))
+                }
               >
-                <SelectTrigger id={filter.key} className="w-full border border-current opacity-80" style={{ backgroundColor: 'transparent', color: 'inherit' }}>
+                <SelectTrigger
+                  id={filter.key}
+                  className="w-full border border-slate-200/60 rounded-xl text-xs font-medium"
+                  style={{
+                    backgroundColor: tema.fundo || "#F8FAFC",
+                    color: tema.fonte || "inherit",
+                  }}
+                >
                   <SelectValue placeholder={filter.placeholder} />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-slate-200 text-slate-700 max-h-[300px]">
-                  
-                  {/* A nossa opção invisível agora chama-se 'vazio' */}
-                  <SelectItem value="vazio" className="font-semibold text-slate-400">
+                <SelectContent
+                  className="max-h-[300px] border border-slate-200/60 rounded-xl shadow-xl z-[9999]"
+                  style={{
+                    backgroundColor: tema.cartao || "#FFFFFF",
+                    color: tema.fonte || "#1E293B",
+                  }}
+                >
+                  <SelectItem value="vazio" className="font-semibold opacity-50">
                     {filter.placeholder}
                   </SelectItem>
-                  
+
                   {options.map((option) => (
                     <SelectItem key={option} value={option}>
                       {option}
@@ -176,8 +185,11 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
           <Button
             variant="outline"
             onClick={handleClear}
-            className="mt-2 w-full gap-2 text-xs font-semibold border-current opacity-70 hover:opacity-100 transition-opacity"
-            style={{ backgroundColor: 'transparent', color: 'inherit' }}
+            className="mt-2 w-full gap-2 text-xs font-semibold rounded-xl border border-slate-200/60 hover:opacity-80 transition-opacity"
+            style={{
+              backgroundColor: "transparent",
+              color: "inherit",
+            }}
           >
             <RotateCcw className="size-3.5" />
             Limpar Filtros
