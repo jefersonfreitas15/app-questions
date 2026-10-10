@@ -1,18 +1,71 @@
 import { NextResponse, type NextRequest } from "next/server";
-import type { EmailOtpType } from "@supabase/supabase-js";
-import { supabaseServer } from "@/lib/supabase/server";
+import { type EmailOtpType } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const p = request.nextUrl.searchParams;
-  const token_hash = p.get("token_hash");
-  const type = p.get("type") as EmailOtpType | null;
-  const next = p.get("next") ?? "/app";
-  const destino = next.startsWith("/") && !next.startsWith("//") ? next : "/app";
+  const { searchParams } = new URL(request.url);
+  const token_hash = searchParams.get("token_hash") || searchParams.get("token");
+  const rawType = searchParams.get("type");
+  const next = searchParams.get("next") || "/app";
 
-  if (token_hash && type) {
-    const supabase = await supabaseServer();
-    const { error } = await supabase.auth.verifyOtp({ type, token_hash });
-    if (!error) return NextResponse.redirect(new URL(destino, request.url));
+  // Se o tipo vier como 'magiclink', converte para 'email' (o padrão aceito pelo verifyOtp)
+  const type: EmailOtpType =
+    rawType === "magiclink" || rawType === "signup" || rawType === "invite"
+      ? (rawType as EmailOtpType)
+      : "email";
+
+  const destinoFinal = next.startsWith("/") && !next.startsWith("//") ? next : "/app";
+
+  if (token_hash) {
+    const cookieStore = request.cookies;
+    let response = NextResponse.redirect(new URL(destinoFinal, request.url));
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookieOptions: { name: "sb-qpro-auth" },
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              request.cookies.set(name, value);
+              response.cookies.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    // 1. Tenta validar com o tipo recebido
+    let { error } = await supabase.auth.verifyOtp({
+      type,
+      token_hash,
+    });
+
+    // 2. Se falhar, tenta com o tipo 'email' como fallback seguro
+    if (error && type !== "email") {
+      const retry = await supabase.auth.verifyOtp({
+        type: "email",
+        token_hash,
+      });
+      error = retry.error;
+    }
+
+    if (!error) {
+      // Sessão autenticada e cookies gravados na resposta
+      return response;
+    }
+
+        console.error("Erro no verifyOtp:", error.message);
+    return NextResponse.redirect(
+      new URL(`/login?erro=${encodeURIComponent(error.message)}`, request.url)
+    );
   }
-  return NextResponse.redirect(new URL("/login?erro=link", request.url));
+
+  return NextResponse.redirect(new URL("/login?erro=sem_token", request.url));
 }

@@ -79,14 +79,15 @@ async function gerarLinkMagico(email: string): Promise<string> {
       return `${SITE}/login`;
     }
 
-    // Se o Supabase gerar o link apontando para o seu próprio domínio, convertemos para confirmação direta na sua rota
     const actionLink = data.properties.action_link;
     const url = new URL(actionLink);
-    const tokenHash = url.searchParams.get("token_hash") || url.searchParams.get("token");
-    const type = url.searchParams.get("type") || "magiclink";
+    const tokenHash =
+      url.searchParams.get("token_hash") ||
+      url.searchParams.get("token") ||
+      data.properties.hashed_token;
 
     if (tokenHash) {
-      return `${SITE}/auth/confirm?token_hash=${tokenHash}&type=${type}&next=/app`;
+      return `${SITE}/auth/confirm?token_hash=${tokenHash}&type=email&next=/app`;
     }
 
     return actionLink;
