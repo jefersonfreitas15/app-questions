@@ -1080,18 +1080,23 @@ export function CadernoQuestoes({
         const fim = inicio + 20;
 
         let q = supabase
-          .from('questoes')
-          .select('*, alternativas(*)')
-          .order('id', { ascending: false })
-          .range(inicio, fim);
+      .from('questoes')
+      .select('*, alternativas(*)');
 
-        if (filtros?.banca) q = q.eq('banca', filtros.banca);
-        if (filtros?.orgao) q = q.eq('orgao', filtros.orgao);
-        if (filtros?.ano) q = q.eq('ano', Number(filtros.ano));
-        if (filtros?.disciplina) q = q.ilike('disciplina', `%${filtros.disciplina}%`);
-        if (filtros?.assunto) q = q.eq('assunto', filtros.assunto);
+    // 1. Aplicar os filtros primeiro (todos com .eq para serem instantâneos)
+    if (filtros?.banca) q = q.eq('banca', filtros.banca);
+    if (filtros?.orgao) q = q.eq('orgao', filtros.orgao);
+    if (filtros?.ano) q = q.eq('ano', Number(filtros.ano));
+    
+    // A CORREÇÃO PRINCIPAL:
+    if (filtros?.disciplina) q = q.eq('disciplina', filtros.disciplina);
+    
+    if (filtros?.assunto) q = q.eq('assunto', filtros.assunto);
 
-        const { data } = await q;
+    // 2. Aplicar a ordem e a paginação no final
+    q = q.order('id', { ascending: false }).range(inicio, fim);
+
+    const { data } = await q;
         if (!cancelado && data && data.length > 0) {
           setCacheRemoto((prev) => {
             const novo = { ...prev };
