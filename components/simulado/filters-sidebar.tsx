@@ -145,8 +145,12 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
               </Label>
               
               <Select
-                // O uso do `value` com fallback garante que o componente Shadcn não quebra
-                value={valorAtual || "___all___"}
+                // O truque da key força o componente a recriar-se e mostrar o placeholder correto quando limpa
+                key={valorAtual || `vazio-${filter.key}`} 
+                
+                // Usamos undefined em vez de "___all___" para ativar o placeholder nativo
+                value={valorAtual || undefined} 
+                
                 onValueChange={(val: any) => handleSelectChange(filter.key, String(val))}
               >
                 <SelectTrigger id={filter.key} className="w-full border border-current opacity-80" style={{ backgroundColor: 'transparent', color: 'inherit' }}>
@@ -154,7 +158,7 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 text-slate-700 max-h-[300px]">
                   
-                  {/* Opção dedicada invisível para forçar a limpeza segura do filtro */}
+                  {/* Mantemos esta opção na lista para o utilizador poder clicar e limpar */}
                   <SelectItem value="___all___" className="font-semibold text-slate-400">
                     {filter.placeholder}
                   </SelectItem>
