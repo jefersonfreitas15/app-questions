@@ -1,73 +1,90 @@
-import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { exigirAdmin } from "../../../../lib/admin";
 
-export const maxDuration = 60; 
+export const maxDuration = 60;
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+
+const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
 export async function POST(request: Request) {
   try {
+    if (!(await exigirAdmin())) {
+      return NextResponse.json({ error: "Acesso não autorizado." }, { status: 403 });
+    }
+
+    if (!GEMINI_API_KEY) {
+      return NextResponse.json({ error: "Chave GEMINI_API_KEY não configurada no servidor." }, { status: 500 });
+    }
+
     const formData = await request.formData();
-    const provaFile = formData.get('prova') as File;
-    const gabaritoFile = formData.get('gabarito') as File;
+    const provaFile = formData.get("prova") as File | null;
+    const gabaritoFile = formData.get("gabarito") as File | null;
 
     if (!provaFile || !gabaritoFile) {
-      return NextResponse.json({ error: 'Faltam ficheiros (prova ou gabarito).' }, { status: 400 });
+      return NextResponse.json({ error: "Envie ambos os arquivos: Prova e Gabarito em PDF." }, { status: 400 });
+    }
+
+    if (provaFile.size > MAX_FILE_SIZE || gabaritoFile.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "Cada arquivo PDF deve ter no máximo 15MB." }, { status: 400 });
     }
 
     const provaBuffer = Buffer.from(await provaFile.arrayBuffer());
     const gabaritoBuffer = Buffer.from(await gabaritoFile.arrayBuffer());
-    
-    const provaBase64 = provaBuffer.toString('base64');
-    const gabaritoBase64 = gabaritoBuffer.toString('base64');
 
-    const model = genAI.getGenerativeModel({ 
-      model: "gemini-3.8-flash",
-      generationConfig: { responseMimeType: "application/json" }
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      generationConfig: { responseMimeType: "application/json" },
     });
 
-    const prompt = `
-      Você é um especialista em extração de dados de concursos públicos brasileiros.
-      Em anexo, envio-lhe dois arquivos PDF nativos: o Caderno de Prova e o Gabarito Oficial.
-      
-      Sua tarefa (Seja rápido e preciso):
-      1. Leia as questões da Prova e as suas alternativas.
-      2. Cruze com as respostas do Gabarito para descobrir qual é a alternativa correta.
-      3. Extraia e devolva ESTRITAMENTE um array JSON com as questões formatadas.
-      
-      Formato EXATO obrigatório do JSON:
-      [
-        {
-          "enunciado": "Texto completo da pergunta",
-          "banca": "Nome da Banca (ex: FGV, Cebraspe, FCC)",
-          "orgao": "Órgão do concurso",
-          "ano": 2026,
-          "disciplina": "Tente adivinhar a disciplina (ex: Português, Direito Administrativo)",
-          "alternativas": [
-            { "texto": "Texto da alternativa A", "letra": "A", "is_correta": false },
-            { "texto": "Texto da alternativa B", "letra": "B", "is_correta": true }
-          ]
-        }
-      ]
-    `;
+    const prompt = `Você é um extrator especialista em provas de concursos públicos brasileiros.
+Analise os dois PDFs anexados (o Caderno de Prova e o Gabarito Oficial).
+
+Instruções:
+1. Extraia o texto integral das questões e de suas respectivas alternativas.
+2. Cruze com o Gabarito Oficial para marcar 'is_correta: true' na alternativa certa.
+3. Identifique banca, órgão, ano e disciplina de forma precisa.
+
+Retorne EXCLUSIVAMENTE um array JSON no seguinte formato:
+[
+  {
+    "banca": "Nome da banca",
+    "orgao": "Órgão do concurso",
+    "ano": 2026,
+    "disciplina": "Nome da matéria",
+    "assunto": "Assunto principal da questão",
+    "enunciado": "Enunciado da questão...",
+    "explicacao": "Gabarito ou comentário resumido se houver",
+    "alternativas": [
+      { "texto": "Texto alternativa A", "is_correta": false },
+      { "texto": "Texto alternativa B", "is_correta": true }
+    ]
+  }
+]`;
 
     const result = await model.generateContent([
       prompt,
-      { inlineData: { data: provaBase64, mimeType: "application/pdf" } },
-      { inlineData: { data: gabaritoBase64, mimeType: "application/pdf" } }
+      { inlineData: { data: provaBuffer.toString("base64"), mimeType: "application/pdf" } },
+      { inlineData: { data: gabaritoBuffer.toString("base64"), mimeType: "application/pdf" } },
     ]);
 
     let respostaTexto = result.response.text();
-    respostaTexto = respostaTexto.replace(/```json/g, '').replace(/```/g, '').trim();
+    respostaTexto = respostaTexto.replace(/```json/gi, "").replace(/```/g, "").trim();
 
     const questoesJSON = JSON.parse(respostaTexto);
 
-    // ALTERAÇÃO: O servidor já não grava no banco. Apenas devolve as questões para o frontend exibir a pré-visualização.
-    return NextResponse.json({ questoes: questoesJSON });
+    if (!Array.isArray(questoesJSON)) {
+      throw new Error("A IA não retornou um array de questões estruturado.");
+    }
 
+    return NextResponse.json({ questoes: questoesJSON });
   } catch (err: any) {
-    console.error("Erro no processamento:", err);
-    // Garante que o frontend recebe sempre um JSON limpo, evitando o erro "Unexpected token"
-    return NextResponse.json({ error: err.message || "Erro na IA ao processar o PDF." }, { status: 500 });
+    console.error("Erro em /api/admin/processar-pdf:", err);
+    return NextResponse.json(
+      { error: err.message || "Falha ao processar os PDFs com Inteligência Artificial." },
+      { status: 500 }
+    );
   }
 }

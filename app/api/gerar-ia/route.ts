@@ -1,105 +1,150 @@
 import { NextResponse } from "next/server";
+import crypto from "node:crypto";
+import { supabaseServer } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { exigirAdmin } from "@/lib/admin";
 
-export const dynamic = 'force-dynamic';
-export const fetchCache = 'force-no-store';
+export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 
 export async function POST(req: Request) {
   try {
+    const supabase = await supabaseServer();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Faça login para gerar questões com IA." }, { status: 401 });
+    }
+
     const body = await req.json();
-    const disciplina = (body.disciplina || "Direito Administrativo").trim();
-    const assunto = (body.assunto || "").trim();
+    const disciplina = String(body.disciplina || "Direito Administrativo").trim();
+    const assunto = String(body.assunto || "").trim();
     const quantidade = Math.min(Math.max(Number(body.quantidade) || 5, 1), 5);
 
-    const assuntoFormatado = assunto ? assunto : "Assuntos gerais da disciplina";
-    const bancas = ["FGV", "FCC", "Cebraspe", "Vunesp"];
+    // 1. Tenta debitar créditos no banco de dados
+    const { data: saldoRestante, error: creditosError } = await supabase.rpc("consumir_creditos", {
+      p_qtd: quantidade,
+    });
+
+    if (creditosError || saldoRestante === null) {
+      return NextResponse.json(
+        { error: "Saldo de créditos de IA insuficiente. Recarregue seu pacote para continuar." },
+        { status: 402 }
+      );
+    }
+
+    if (!GEMINI_API_KEY) {
+      throw new Error("Chave da API do Gemini não configurada no servidor.");
+    }
+
+    const assuntoFormatado = assunto || "Conhecimentos gerais da matéria";
+    const bancas = ["FGV", "Cebraspe", "FCC", "Vunesp"];
     const bancaSorteada = bancas[Math.floor(Math.random() * bancas.length)];
-    const fatorAleatorio = Math.random().toString(36).substring(2, 15) + Date.now();
+    const nonce = crypto.randomBytes(4).toString("hex");
 
-    if (GEMINI_API_KEY) {
-      const prompt = `[ID: ${fatorAleatorio}] - BANCAS: Simule ${bancaSorteada}.
-Gere ${quantidade} questão(ões) inédita(s) sobre "${disciplina}", tema "${assuntoFormatado}".
-REGRA VITAL: Crie uma situação ou caso prático NUNCA antes usado. A resposta deve exigir interpretação avançada.
+    const prompt = `[ID: ${nonce}] - Banca simulada: ${bancaSorteada}.
+Gere exatamente ${quantidade} questão(ões) inédita(s) de concurso público sobre a disciplina "${disciplina}", com foco no assunto "${assuntoFormatado}".
+Crie enunciados com situações práticas e raciocínio aprofundado.
 
-Retorne APENAS um array JSON:
+Retorne ESTRITAMENTE um array JSON puro (sem marcações markdown fora do JSON):
 [
   {
-    "banca": "Simulação ${bancaSorteada}",
-    "orgao": "Qpro",
-    "ano": 2026,
-    "disciplina": "${disciplina}",
-    "assunto": "${assuntoFormatado}",
-    "enunciado": "Texto da questão...",
-    "explicacao": "Gabarito comentado...",
+    "enunciado": "Texto completo da questão...",
+    "explicacao": "Fundamentação jurídica e gabarito comentado...",
     "alternativas": [
-      { "texto": "Alt A", "is_correta": false },
-      { "texto": "Alt B", "is_correta": true },
-      { "texto": "Alt C", "is_correta": false },
-      { "texto": "Alt D", "is_correta": false },
-      { "texto": "Alt E", "is_correta": false }
+      { "texto": "Assertiva A", "is_correta": false },
+      { "texto": "Assertiva B", "is_correta": true },
+      { "texto": "Assertiva C", "is_correta": false },
+      { "texto": "Assertiva D", "is_correta": false },
+      { "texto": "Assertiva E", "is_correta": false }
     ]
   }
 ]`;
 
-      let resp;
-      let maxTentativas = 3;
-      let tempoEspera = 2000; // Começa a esperar 2 segundos
-
-      // Loop de tentativa automática (Retry Mechanism)
-      for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
-        resp = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${GEMINI_API_KEY}`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            cache: "no-store",
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { responseMimeType: "application/json", temperature: 0.95 },
-            }),
-          }
-        );
-
-        // Se o Google estiver sobrecarregado (503), espera e tenta de novo
-        if (resp.status === 503) {
-          if (tentativa === maxTentativas) {
-            throw new Error(`Google Gemini sobrecarregado após ${maxTentativas} tentativas. Tente novamente em alguns minutos.`);
-          }
-          await new Promise(resolve => setTimeout(resolve, tempoEspera));
-          tempoEspera *= 2; // Dobra o tempo de espera (2s, depois 4s)
-          continue;
-        }
-
-        // Se der outro erro (ex: chave inválida), aborta imediatamente
-        if (!resp.ok) throw new Error(await resp.text());
-        
-        // Se a resposta for OK, sai do loop
-        break; 
-      }
-
-      const data = await resp?.json();
-      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const cleanText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-      
-      const parsed = JSON.parse(cleanText);
-
-      return NextResponse.json(
-        { questoes: parsed.slice(0, quantidade) },
+    let rawText = "";
+    let tentativas = 0;
+    while (tentativas < 2) {
+      tentativas++;
+      const resp = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${GEMINI_API_KEY}`,
         {
-          headers: {
-            'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-          }
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.85,
+            },
+          }),
         }
       );
+
+      if (resp.ok) {
+        const json = await resp.json();
+        rawText = json?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        break;
+      }
+
+      if (tentativas >= 2) {
+        const errText = await resp.text();
+        throw new Error(`Falha na API Gemini (${resp.status}): ${errText}`);
+      }
+      await new Promise((r) => setTimeout(r, 2000));
     }
 
-    throw new Error("Chave GEMINI não configurada no servidor.");
-    
+    const cleanJson = rawText.replace(/```json/gi, "").replace(/```/g, "").trim();
+    const questoesGeradas = JSON.parse(cleanJson);
+
+    if (!Array.isArray(questoesGeradas) || questoesGeradas.length === 0) {
+      throw new Error("A IA não retornou um formato de questões válido.");
+    }
+
+    // 2. Prepara e higieniza as questões para gravação via RPC segura
+    const anoAtual = new Date().getFullYear();
+    const questoesProntas = questoesGeradas.slice(0, quantidade).map((q: any) => {
+      const enunciado = String(q.enunciado || "").trim();
+      const hash = crypto
+        .createHash("sha256")
+        .update(`IA|${disciplina}|${enunciado.toLowerCase()}`)
+        .digest("hex");
+
+      return {
+        banca: `Simulação ${bancaSorteada}`,
+        orgao: "Qpro Concursos",
+        ano: anoAtual,
+        disciplina,
+        assunto: assuntoFormatado,
+        enunciado,
+        explicacao: String(q.explicacao || "").trim(),
+        hash,
+        alternativas: (q.alternativas || []).map((a: any) => ({
+          texto: String(a.texto || "").trim(),
+          is_correta: Boolean(a.is_correta),
+        })),
+      };
+    });
+
+    const { data: dbResult, error: dbError } = await (supabaseAdmin.rpc as any)(
+  "importar_questoes",
+  { p_lista: questoesProntas }
+);
+
+    if (dbError) {
+      console.error("Erro ao gravar questões de IA:", dbError.message);
+      throw new Error("As questões foram geradas, mas ocorreu uma falha ao registrá-las no banco.");
+    }
+
+    return NextResponse.json({
+      sucesso: true,
+      saldoRestante,
+      resultado: dbResult,
+      questoes: questoesProntas,
+    });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message }, { status: 500 });
+    console.error("Erro na rota /api/gerar-ia:", err);
+    return NextResponse.json({ error: err.message || "Erro interno ao processar IA." }, { status: 500 });
   }
 }
