@@ -41,21 +41,26 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
   const [isPending, startTransition] = useTransition();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Barreira de Cache para Soft Navigation do Next.js
+  // ==========================================
+  // BARREIRA DE CACHE CONTRA SOFT NAVIGATION
+  // ==========================================
   const [cachedOptions, setCachedOptions] = useState<DbFilterOptions>({
     banca: [], orgao: [], ano: [], disciplina: [], assunto: []
   });
 
   useEffect(() => {
     if (dbOptions) {
-      // Só atualiza a memória se o servidor enviou dados reais (suporta o efeito cascata)
-      const temDadosValidos = Object.values(dbOptions).some(arr => Array.isArray(arr) && arr.length > 0);
+      // Confirma se o servidor enviou dados válidos antes de sobrescrever a memória
+      const temDadosValidos = Object.values(dbOptions).some(
+        (arr) => Array.isArray(arr) && arr.length > 0
+      );
       if (temDadosValidos) {
         setCachedOptions(dbOptions);
       }
     }
   }, [dbOptions]);
 
+  // Leitura segura da URL (Fonte Única de Verdade)
   const selected: Record<FilterKey, string> = {
     banca: searchParams.get("banca") || "",
     orgao: searchParams.get("orgao") || "",
@@ -65,7 +70,8 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
   };
 
   const handleSelectChange = (key: FilterKey, val: string) => {
-    const cleanVal = val === "___limpar___" ? "" : val;
+    // Tratamento nativo: "___all___" é a nossa chave técnica para limpar o filtro no Radix UI
+    const cleanVal = val === "___all___" ? "" : val;
     const params = new URLSearchParams(searchParams.toString());
 
     if (cleanVal) {
@@ -74,10 +80,12 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
       params.delete(key);
     }
 
+    // Regra de Negócio: Se mudar a disciplina, o assunto anterior perde a validade
     if (key === "disciplina" && params.has("assunto")) {
       params.delete("assunto");
     }
 
+    // Retorna à primeira página sempre que um filtro é alterado
     if (params.has("page")) {
       params.delete("page");
     }
@@ -126,6 +134,7 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
         } ${mobileOpen ? "flex" : "hidden lg:flex"}`}
       >
         {filters.map((filter) => {
+          // Usa sempre o cache interno para garantir que a lista nunca pisca ou some
           const options = cachedOptions[filter.key] || [];
           const valorAtual = selected[filter.key];
 
@@ -136,8 +145,8 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
               </Label>
               
               <Select
-                key={valorAtual || `vazio-${filter.key}`}
-                value={valorAtual || undefined}
+                // O uso do `value` com fallback garante que o componente Shadcn não quebra
+                value={valorAtual || "___all___"}
                 onValueChange={(val: any) => handleSelectChange(filter.key, String(val))}
               >
                 <SelectTrigger id={filter.key} className="w-full border border-current opacity-80" style={{ backgroundColor: 'transparent', color: 'inherit' }}>
@@ -145,7 +154,8 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 text-slate-700 max-h-[300px]">
                   
-                  <SelectItem value="___limpar___" className="font-semibold text-slate-400">
+                  {/* Opção dedicada invisível para forçar a limpeza segura do filtro */}
+                  <SelectItem value="___all___" className="font-semibold text-slate-400">
                     {filter.placeholder}
                   </SelectItem>
                   
