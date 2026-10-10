@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { supabaseBrowser } from '@/lib/supabase/browser';
 import { Copy, CheckCircle2, ArrowRight, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 
@@ -26,7 +26,7 @@ function ObrigadoConteudo() {
 
     const buscarCodigo = async () => {
       try {
-        // Tenta buscar o código mais recente associado a este e-mail.
+        const supabase = supabaseBrowser();
         // Fazemos um loop curto (retry) caso o webhook atrase 1 ou 2 segundos para inserir no banco.
         let tentativas = 0;
         let encontrou = false;
