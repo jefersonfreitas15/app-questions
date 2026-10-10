@@ -107,6 +107,9 @@ export default function PaginaDeVendas() {
             <a href="/login" className="hidden px-3 py-2 text-sm font-bold text-slate-300 transition-colors hover:text-white sm:inline">
               Entrar
             </a>
+                     <a href="/app" className="hidden rounded-xl border border-white/20 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-white/10 md:inline">
+           Testar grátis
+         </a>
             <BotaoCompra texto="Quero o Qpro" className="hidden sm:inline-flex" />
           </div>
         </div>
@@ -140,6 +143,9 @@ export default function PaginaDeVendas() {
 
             <div className="flex flex-col items-center gap-4 sm:flex-row lg:justify-start sm:justify-center">
               <BotaoCompra texto="Quero meu acesso vitalício" grande className="w-full sm:w-auto" />
+                         <a href="/app" className="w-full rounded-2xl border border-white/20 px-6 py-4 text-center text-base font-extrabold text-white transition-colors hover:bg-white/10 sm:w-auto">
+             Testar grátis
+           </a>
               <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-400">
                 <Lock className="h-3.5 w-3.5" /> Pagamento 100% seguro via Kiwify
               </span>
