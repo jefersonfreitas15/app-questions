@@ -168,15 +168,17 @@ export function PainelDesempenho({
   initialRespostas?: any[];
   questions?: any[];
 }) {
-  const tema = useTema(); // Sincroniza o painel
-  const [respostas, setRespostas] = useState<any[]>(initialRespostas);
+  const tema = useTema();
+  // Previne erros caso a prop inicial não seja array
+  const respostasIniciaisSeguras = Array.isArray(initialRespostas) ? initialRespostas : [];
+  const [respostas, setRespostas] = useState<any[]>(respostasIniciaisSeguras);
   const [mostrarPorDisciplina, setMostrarPorDisciplina] = useState(false);
 
   const carregarHistorico = () => {
     try {
       const salvoLocal = localStorage.getItem('historico_simulado');
       const listaLocal = salvoLocal ? JSON.parse(salvoLocal) : [];
-      if (listaLocal.length >= initialRespostas.length) {
+      if (Array.isArray(listaLocal) && listaLocal.length >= respostasIniciaisSeguras.length) {
         setRespostas(listaLocal);
       }
     } catch (e) {
@@ -203,18 +205,20 @@ export function PainelDesempenho({
   };
 
   const totalRespondidas = respostas.length;
-  const totalAcertos = respostas.filter((r) => r.acertou).length;
+  const totalAcertos = respostas.filter((r) => r && r.acertou).length;
   const totalErros = totalRespondidas - totalAcertos;
   const taxaAcerto =
     totalRespondidas > 0 ? Math.round((totalAcertos / totalRespondidas) * 100) : 0;
 
   const mapaDisciplinas = React.useMemo(() => {
     const mapa: Record<string, string> = {};
-    questions.forEach((q) => {
-      if (q && q.id !== undefined) {
-        mapa[String(q.id)] = normalizarDisciplina(q.disciplina || 'Geral');
-      }
-    });
+    if (Array.isArray(questions)) {
+      questions.forEach((q) => {
+        if (q && q.id !== undefined) {
+          mapa[String(q.id)] = normalizarDisciplina(q.disciplina || 'Geral');
+        }
+      });
+    }
     return mapa;
   }, [questions]);
 
@@ -222,6 +226,7 @@ export function PainelDesempenho({
     const stats: Record<string, { total: number; acertos: number; erros: number }> = {};
 
     respostas.forEach((r) => {
+      if (!r) return;
       const nomeBruto =
         r.disciplina || mapaDisciplinas[String(r.questao_id)] || 'Outras / Geral';
       const nomeDisciplina = normalizarDisciplina(nomeBruto);
@@ -386,7 +391,7 @@ export function PainelDesempenho({
                   <div
                     key={item.disciplina}
                     className="p-3.5 rounded-xl border border-slate-200/30 flex flex-col justify-between gap-2"
-                    style={{ backgroundColor: tema.fundo || '#F8FAFC' }} // Destaca do cartão
+                    style={{ backgroundColor: tema.fundo || '#F8FAFC' }}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs sm:text-sm font-bold truncate" style={{ color: 'inherit' }}>
@@ -439,7 +444,7 @@ export function QuestionCard({
   numeroAtual?: number;
   totalQuestoes?: number;
 }) {
-  const tema = useTema(); // Hook do tema
+  const tema = useTema();
   const [selectedId, setSelectedId] = useState<string | number | null>(null);
   const [isAnswered, setIsAnswered] = useState(false);
   const [showComment, setShowComment] = useState(false);
@@ -464,7 +469,8 @@ export function QuestionCard({
 
       try {
         const favRaw = localStorage.getItem('questoes_favoritas_ids');
-        const favIds: string[] = favRaw ? JSON.parse(favRaw) : [];
+        let favIds: string[] = favRaw ? JSON.parse(favRaw) : [];
+        if (!Array.isArray(favIds)) favIds = []; // Segurança contra localStorage quebrado
         setIsFavorita(favIds.includes(qId));
       } catch (e) {}
 
@@ -491,7 +497,7 @@ export function QuestionCard({
   }
 
   const alternativas =
-    question.alternativas && question.alternativas.length > 0
+    Array.isArray(question.alternativas) && question.alternativas.length > 0
       ? question.alternativas
       : [
           { id: '1', letra: 'A', texto: '50%', is_correta: false },
@@ -528,6 +534,7 @@ export function QuestionCard({
     try {
       const favIdsRaw = localStorage.getItem('questoes_favoritas_ids');
       let favIds: string[] = favIdsRaw ? JSON.parse(favIdsRaw) : [];
+      if (!Array.isArray(favIds)) favIds = []; // Segurança
 
       const favCacheRaw = localStorage.getItem('questoes_favoritas_cache');
       let favCache: Record<string, any> = favCacheRaw ? JSON.parse(favCacheRaw) : {};
@@ -594,8 +601,10 @@ export function QuestionCard({
     try {
       const salvoLocal = localStorage.getItem('historico_simulado');
       const listaAtual = salvoLocal ? JSON.parse(salvoLocal) : [];
-      listaAtual.push(novaResposta);
-      localStorage.setItem('historico_simulado', JSON.stringify(listaAtual));
+      if (Array.isArray(listaAtual)) {
+         listaAtual.push(novaResposta);
+         localStorage.setItem('historico_simulado', JSON.stringify(listaAtual));
+      }
 
       localStorage.setItem('qpro_degustacao_usadas', String(usadasAntes + 1));
 
@@ -935,7 +944,7 @@ export function QuestionCard({
 }
 
 export function CadernoQuestoes({
-  questions,
+  questions = [],
   totalCount,
   filtros,
 }: {
@@ -949,7 +958,7 @@ export function CadernoQuestoes({
     assunto?: string;
   };
 }) {
-  const tema = useTema(); // Hook do tema global
+  const tema = useTema();
   const [modoCaderno, setModoCaderno] = useState<'todas' | 'erros' | 'favoritas'>('todas');
   const [questoesErros, setQuestoesErros] = useState<any[]>([]);
   const [questoesFavoritas, setQuestoesFavoritas] = useState<any[]>([]);
@@ -969,25 +978,33 @@ export function CadernoQuestoes({
   const [carregandoRemoto, setCarregandoRemoto] = useState(false);
   const [irParaInput, setIrParaInput] = useState('');
 
+  // ESTA CHAVE FIXA O LOOP INFINITO NO REACT 
   const chaveFiltroAtual = `${filtros?.banca || ''}-${filtros?.orgao || ''}-${filtros?.ano || ''}-${filtros?.disciplina || ''}-${filtros?.assunto || ''}`;
 
   const sincronizarListasEstudo = async () => {
     try {
       const mapaLocal: Record<string, any> = {};
-      questions.forEach((q) => {
-        if (q?.id !== undefined) mapaLocal[String(q.id)] = q;
-      });
+      if (Array.isArray(questions)) {
+        questions.forEach((q) => {
+          if (q?.id !== undefined) mapaLocal[String(q.id)] = q;
+        });
+      }
+      
       Object.values(cacheRemoto).forEach((q: any) => {
         if (q?.id !== undefined) mapaLocal[String(q.id)] = q;
       });
 
       const favIdsRaw = localStorage.getItem('questoes_favoritas_ids');
-      const favIds: string[] = favIdsRaw ? JSON.parse(favIdsRaw) : [];
+      let favIds: string[] = favIdsRaw ? JSON.parse(favIdsRaw) : [];
+      if (!Array.isArray(favIds)) favIds = []; // Segurança extra para impedir o erro .includes
+
       const favCacheRaw = localStorage.getItem('questoes_favoritas_cache');
-      const favCache: Record<string, any> = favCacheRaw ? JSON.parse(favCacheRaw) : {};
+      let favCache: Record<string, any> = favCacheRaw ? JSON.parse(favCacheRaw) : {};
 
       const histRaw = localStorage.getItem('historico_simulado');
-      const hist: any[] = histRaw ? JSON.parse(histRaw) : [];
+      let hist: any[] = histRaw ? JSON.parse(histRaw) : [];
+      if (!Array.isArray(hist)) hist = [];
+
       const ultimoStatusPorQuestao: Record<string, boolean> = {};
       hist.forEach((r) => {
         if (r?.questao_id !== undefined) {
@@ -1009,6 +1026,7 @@ export function CadernoQuestoes({
         const idsNumericos = idsParaBuscarNoBanco
           .map((id) => Number(id))
           .filter((n) => !isNaN(n));
+        
         if (idsNumericos.length > 0) {
           const { data: encontradas } = await supabase
             .from('questoes')
@@ -1056,9 +1074,9 @@ export function CadernoQuestoes({
 
   const total =
     modoCaderno === 'todas'
-      ? totalCount && totalCount > questions.length
+      ? totalCount && totalCount > (questions?.length || 0)
         ? totalCount
-        : questions.length
+        : (questions?.length || 0)
       : listaAtiva.length;
 
   useEffect(() => {
@@ -1068,7 +1086,9 @@ export function CadernoQuestoes({
 
   useEffect(() => {
     if (modoCaderno !== 'todas') return;
-    if (currentIndex < questions.length || cacheRemoto[currentIndex]) {
+    
+    // Evita refetch se já estiver no cache
+    if (currentIndex < (questions?.length || 0) || cacheRemoto[currentIndex]) {
       return;
     }
 
@@ -1076,33 +1096,35 @@ export function CadernoQuestoes({
     const buscarBlocoRemoto = async () => {
       setCarregandoRemoto(true);
       try {
-        const inicio = Math.max(0, currentIndex - 2);
-        const fim = inicio + 20;
+        // MATEMÁTICA CORRIGIDA: Usa páginas absolutas e fixas de 20 em 20
+        const pageInicio = Math.floor(currentIndex / 20) * 20;
+        const pageFim = pageInicio + 19;
 
         let q = supabase
-      .from('questoes')
-      .select('*, alternativas(*)');
+          .from('questoes')
+          .select('*, alternativas(*)');
 
-    // 1. Aplicar os filtros primeiro (todos com .eq para serem instantâneos)
-    if (filtros?.banca) q = q.eq('banca', filtros.banca);
-    if (filtros?.orgao) q = q.eq('orgao', filtros.orgao);
-    if (filtros?.ano) q = q.eq('ano', Number(filtros.ano));
-    
-    // A CORREÇÃO PRINCIPAL:
-    if (filtros?.disciplina) q = q.eq('disciplina', filtros.disciplina);
-    
-    if (filtros?.assunto) q = q.eq('assunto', filtros.assunto);
+        if (filtros?.banca) q = q.eq('banca', filtros.banca);
+        if (filtros?.orgao) q = q.eq('orgao', filtros.orgao);
+        if (filtros?.ano) q = q.eq('ano', Number(filtros.ano));
+        if (filtros?.disciplina) q = q.eq('disciplina', filtros.disciplina);
+        if (filtros?.assunto) q = q.eq('assunto', filtros.assunto);
 
-    // 2. Aplicar a ordem e a paginação no final
-    q = q.order('id', { ascending: false }).range(inicio, fim);
+        q = q.order('id', { ascending: false }).range(pageInicio, pageFim);
 
-    const { data } = await q;
-        if (!cancelado && data && data.length > 0) {
+        const { data, error } = await q;
+
+        if (!cancelado && data) {
           setCacheRemoto((prev) => {
             const novo = { ...prev };
-            data.forEach((item, idx) => {
-              novo[inicio + idx] = item;
-            });
+            // Se a busca falhar ou retornar zero, marcamos para evitar loop infinito
+            if (data.length === 0) {
+               novo[currentIndex] = { _vazio: true };
+            } else {
+               data.forEach((item, idx) => {
+                 novo[pageInicio + idx] = item;
+               });
+            }
             return novo;
           });
         }
@@ -1117,16 +1139,22 @@ export function CadernoQuestoes({
     return () => {
       cancelado = true;
     };
-  }, [currentIndex, questions.length, cacheRemoto, filtros, modoCaderno]);
+    // Atenção: a dependência é chaveFiltroAtual, NÃO o objeto filtros inteiro
+  }, [currentIndex, questions?.length, cacheRemoto, chaveFiltroAtual, modoCaderno]);
 
   const indiceSeguro = total > 0 ? Math.min(currentIndex, total - 1) : 0;
 
-  const questaoAtual =
+  let questaoAtual =
     modoCaderno === 'todas'
-      ? indiceSeguro < questions.length
+      ? (indiceSeguro < (questions?.length || 0)
         ? questions[indiceSeguro]
-        : cacheRemoto[indiceSeguro]
+        : cacheRemoto[indiceSeguro])
       : listaAtiva[indiceSeguro];
+      
+  // Limpa o marcador vazio (proteção anti-loop) para não exibir lixo na tela
+  if (questaoAtual && questaoAtual._vazio) {
+     questaoAtual = null;
+  }
 
   const gerarPaginacao = () => {
     if (total <= 6) {
@@ -2077,7 +2105,7 @@ export function BotaoNovaQuestao() {
 // 5. IMPORTADOR DE PROVAS COM IA
 // ==========================================
 export function ImportadorProvas() {
-  const tema = useTema(); // Hook
+  const tema = useTema();
   const [provaPdf, setProvaPdf] = useState<File | null>(null);
   const [gabaritoPdf, setGabaritoPdf] = useState<File | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "review" | "saving" | "success" | "error">("idle");
@@ -2231,7 +2259,7 @@ export function ImportadorProvas() {
 // 6. PÁGINA EXCLUSIVA DO ADMINISTRADOR (/admin)
 // ==========================================
 export function PainelAdminExclusivo() {
-  const tema = useTema(); // Hook
+  const tema = useTema();
   const SENHA_ADMIN = "admin123";
 
   const [autenticado, setAutenticado] = useState(false);
@@ -2286,7 +2314,6 @@ export function PainelAdminExclusivo() {
         const parsed = JSON.parse(texto);
         const listaBruta = Array.isArray(parsed) ? parsed : [parsed];
 
-        // LÓGICA DE TRADUÇÃO DO FREELANCER PARA O SUPABASE
         const listaFormatada = listaBruta.map((q: any) => {
           if (q.Alternativa_A || q.alternativa_a || q.Gabarito || q.gabarito) {
             const gabarito = String(q.Gabarito || q.gabarito || '').trim().toUpperCase();
@@ -2558,7 +2585,6 @@ export function SeletorTema() {
       document.body.style.backgroundColor = novoFundo;
       document.body.style.color = novaFonte;
       
-      // O NOSSO HOOK useTema VAI ESCUTAR ESTE EVENTO E ATUALIZAR TUDO MAGICA E INSTANTANEAMENTE
       window.dispatchEvent(new Event('qpro-tema-alterado'));
     } catch (e) {}
   };
