@@ -132,9 +132,13 @@ Retorne ESTRITAMENTE um array JSON puro (sem marcações markdown fora do JSON):
   { p_lista: questoesProntas }
 );
 
-    if (dbError) {
-      console.error("Erro ao gravar questões de IA:", dbError.message);
-      throw new Error("As questões foram geradas, mas ocorreu uma falha ao registrá-las no banco.");
+        if (dbError) {
+      console.error("Erro ao gravar questões de IA:", dbError);
+      await devolverCreditos(user.id, quantidade);
+      return NextResponse.json(
+        { error: `Não foi possível salvar as questões (${dbError.message}). Seus créditos foram devolvidos.` },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
@@ -147,4 +151,9 @@ Retorne ESTRITAMENTE um array JSON puro (sem marcações markdown fora do JSON):
     console.error("Erro na rota /api/gerar-ia:", err);
     return NextResponse.json({ error: err.message || "Erro interno ao processar IA." }, { status: 500 });
   }
+}
+async function devolverCreditos(userId: string, qtd: number) {
+  const admin = supabaseAdmin as any;
+  const { data } = await admin.from("perfis").select("creditos_ia").eq("id", userId).single();
+  await admin.from("perfis").update({ creditos_ia: (data?.creditos_ia ?? 0) + qtd }).eq("id", userId);
 }

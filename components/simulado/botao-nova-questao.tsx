@@ -8,6 +8,13 @@ import { useTema } from "./tema-context";
 const LINK_CHECKOUT_PAGAMENTO = "https://pay.kiwify.com.br/VE1GbyL";
 const LIMITE_QUESTOES_GRATIS = 5;
 
+// Mesmo produto de créditos, uma oferta (link) para cada pacote
+const PACOTES_CREDITOS = [
+  { creditos: 100, preco: "R$ 19,90", link: "https://pay.kiwify.com.br/pO9bvnh", destaque: false },
+  { creditos: 300, preco: "R$ 37,00", link: "https://pay.kiwify.com.br/ucNASij", destaque: true },
+  { creditos: 1000, preco: "R$ 89,90", link: "https://pay.kiwify.com.br/rAugTp1", destaque: false },
+];
+
 export function BotaoNovaQuestao({
   perfil,
 }: {
@@ -18,6 +25,8 @@ export function BotaoNovaQuestao({
   const [resolvidasGratis, setResolvidasGratis] = useState(0);
   const [modalVitalicioAberto, setModalVitalicioAberto] = useState(false);
   const [modalIaAberto, setModalIaAberto] = useState(false);
+  const [modalCreditosAberto, setModalCreditosAberto] = useState(false);
+  const [semCreditos, setSemCreditos] = useState(false);
 
   const [disciplina, setDisciplina] = useState("Direito Administrativo");
   const [assunto, setAssunto] = useState("");
@@ -26,6 +35,13 @@ export function BotaoNovaQuestao({
   const [erroIa, setErroIa] = useState("");
 
   const ehVitalicio = perfil?.plano === "vitalicio";
+  const logado = Boolean(perfil?.logado);
+  const saldo = perfil?.creditos ?? 0;
+
+  const abrirCompraCreditos = () => {
+    setModalIaAberto(false);
+    setModalCreditosAberto(true);
+  };
 
   const atualizarContagem = () => {
     try {
@@ -41,11 +57,14 @@ export function BotaoNovaQuestao({
     atualizarContagem();
 
     const abrirOferta = () => setModalVitalicioAberto(true);
+    const abrirCreditos = () => setModalCreditosAberto(true);
     window.addEventListener("abrir-modal-vitalicio", abrirOferta);
+    window.addEventListener("abrir-modal-creditos", abrirCreditos);
     window.addEventListener("atualizar-degustacao", atualizarContagem);
 
     return () => {
       window.removeEventListener("abrir-modal-vitalicio", abrirOferta);
+      window.removeEventListener("abrir-modal-creditos", abrirCreditos);
       window.removeEventListener("atualizar-degustacao", atualizarContagem);
     };
   }, []);
@@ -54,8 +73,20 @@ export function BotaoNovaQuestao({
 
   const handleGerarIa = async (e: React.FormEvent) => {
     e.preventDefault();
-    setGerando(true);
     setErroIa("");
+    setSemCreditos(false);
+
+    if (logado && saldo < quantidade) {
+      setSemCreditos(true);
+      setErroIa(
+        saldo > 0
+          ? `Você tem ${saldo} crédito(s). Diminua a quantidade ou compre mais créditos.`
+          : "Seus créditos de IA acabaram. Compre um pacote para continuar gerando questões."
+      );
+      return;
+    }
+
+    setGerando(true);
 
     try {
       const res = await fetch("/api/gerar-ia", {
@@ -65,6 +96,7 @@ export function BotaoNovaQuestao({
       });
 
       const data = await res.json();
+      if (res.status === 402) setSemCreditos(true);
       if (!res.ok) throw new Error(data.error || "Falha ao gerar questões.");
 
       setModalIaAberto(false);
@@ -102,6 +134,19 @@ export function BotaoNovaQuestao({
           </button>
         )}
 
+        {logado && (
+          <button
+            type="button"
+            onClick={() => setModalCreditosAberto(true)}
+            title="Comprar mais créditos de IA"
+            className="flex items-center gap-1.5 border border-amber-400/70 bg-amber-500/10 text-amber-600 px-3.5 py-2 rounded-xl text-xs font-extrabold hover:bg-amber-500/20 transition-all active:scale-95"
+          >
+            <span>⚡</span>
+            <span>{saldo} créditos</span>
+            <span className="hidden sm:inline">• Comprar mais</span>
+          </button>
+        )}
+
         <button
           type="button"
           onClick={() => {
@@ -118,7 +163,7 @@ export function BotaoNovaQuestao({
         </button>
       </div>
 
-      {/* PORTAL DO MODAL VITALÍCIO (SEMPRE NO TOPO ABSOLUTO DO BODY) */}
+      {/* PORTAL DO MODAL VITALÍCIO */}
       {mounted &&
         modalVitalicioAberto &&
         createPortal(
@@ -220,6 +265,73 @@ export function BotaoNovaQuestao({
           document.body
         )}
 
+      {/* PORTAL DO MODAL DE CRÉDITOS */}
+      {mounted &&
+        modalCreditosAberto &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/75 backdrop-blur-sm p-4 overflow-y-auto">
+            <div
+              style={{
+                backgroundColor: tema.cartao || "#FFFFFF",
+                color: tema.fonte || "#0F172A",
+              }}
+              className="relative border border-slate-200/50 rounded-2xl max-w-lg w-full p-6 shadow-2xl my-8 animate-in fade-in zoom-in-95 duration-200"
+            >
+              <div className="flex items-center justify-between border-b border-slate-200/40 pb-3 mb-4">
+                <h3 className="font-extrabold text-base text-amber-600">⚡ Créditos para o Gerador com IA</h3>
+                <button
+                  type="button"
+                  onClick={() => setModalCreditosAberto(false)}
+                  className="text-sm font-bold opacity-60 hover:opacity-100 px-2 py-1"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p className="text-xs opacity-80 mb-4">
+                Cada crédito gera 1 questão inédita com gabarito comentado.
+                {logado && (
+                  <>
+                    {" "}Seu saldo atual: <strong>{saldo} crédito(s)</strong>.
+                  </>
+                )}
+              </p>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                {PACOTES_CREDITOS.map((p) => (
+                  <a
+                    key={p.creditos}
+                    href={p.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ backgroundColor: tema.fundo || "#F8FAFC" }}
+                    className={`relative rounded-2xl border p-4 text-center transition-all hover:scale-[1.02] active:scale-95 ${
+                      p.destaque ? "border-amber-400 ring-2 ring-amber-400/40" : "border-slate-200/60"
+                    }`}
+                  >
+                    {p.destaque && (
+                      <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-extrabold text-white">
+                        MAIS VENDIDO
+                      </span>
+                    )}
+                    <div className="text-2xl font-extrabold">{p.creditos}</div>
+                    <div className="text-[11px] font-semibold opacity-70">créditos</div>
+                    <div className="mt-2 text-sm font-extrabold text-emerald-600">{p.preco}</div>
+                    <div className="mt-3 rounded-lg bg-amber-500 py-1.5 text-xs font-extrabold text-white">
+                      Comprar
+                    </div>
+                  </a>
+                ))}
+              </div>
+
+              <p className="mt-4 text-[11px] opacity-70 text-center">
+                🔒 Compre com o mesmo e-mail da sua conta. Os créditos entram no saldo automaticamente após a aprovação.
+              </p>
+            </div>
+          </div>,
+          document.body
+        )}
+
       {/* PORTAL DO MODAL DA IA */}
       {mounted &&
         modalIaAberto &&
@@ -245,9 +357,31 @@ export function BotaoNovaQuestao({
                 </button>
               </div>
 
+              {logado && (
+                <div className="mb-3 flex items-center justify-between text-xs font-semibold opacity-80">
+                  <span>⚡ Saldo: {saldo} crédito(s) • 1 crédito por questão</span>
+                  <button
+                    type="button"
+                    onClick={abrirCompraCreditos}
+                    className="font-bold text-indigo-600 hover:underline"
+                  >
+                    Comprar mais
+                  </button>
+                </div>
+              )}
+
               {erroIa && (
                 <div className="mb-3 p-2.5 text-xs rounded-xl bg-rose-50 border border-rose-200 text-rose-600 font-semibold">
                   {erroIa}
+                  {semCreditos && (
+                    <button
+                      type="button"
+                      onClick={abrirCompraCreditos}
+                      className="mt-2 block w-full text-center py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-white font-extrabold"
+                    >
+                      ⚡ Comprar mais créditos
+                    </button>
+                  )}
                 </div>
               )}
 
