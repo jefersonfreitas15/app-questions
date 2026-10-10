@@ -41,7 +41,6 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
   const [isPending, startTransition] = useTransition();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Tipagem estrita adicionada para prevenir erros de inferência "any"
   const selected: Record<FilterKey, string> = {
     banca: searchParams.get("banca") || "",
     orgao: searchParams.get("orgao") || "",
@@ -59,7 +58,8 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
   };
 
   const handleSelectChange = (key: FilterKey, val: string) => {
-    const cleanVal = val === "__all__" ? "" : val;
+    // Intercetamos a chave de limpeza e convertemos num valor vazio seguro
+    const cleanVal = val === "___limpar___" ? "" : val;
     const params = new URLSearchParams(searchParams.toString());
 
     if (cleanVal) {
@@ -125,6 +125,8 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
       >
         {filters.map((filter) => {
           const options = filterOptions[filter.key] || [];
+          const valorAtual = selected[filter.key];
+
           return (
             <div key={filter.key} className="flex flex-col gap-1.5">
               <Label htmlFor={filter.key} className="text-xs font-semibold" style={{ color: 'inherit', opacity: 0.8 }}>
@@ -132,14 +134,18 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
               </Label>
               
               <Select
-                value={selected[filter.key] && selected[filter.key] !== "" ? selected[filter.key] : "__all__"}
+                // O truque do React: forçar a reconstrução do componente ao limpar o valor
+                key={valorAtual || `vazio-${filter.key}`}
+                value={valorAtual || undefined}
                 onValueChange={(val: any) => handleSelectChange(filter.key, String(val))}
               >
                 <SelectTrigger id={filter.key} className="w-full border border-current opacity-80" style={{ backgroundColor: 'transparent', color: 'inherit' }}>
                   <SelectValue placeholder={filter.placeholder} />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 text-slate-700 max-h-[300px]">
-                  <SelectItem value="__all__" className="font-semibold text-slate-400">
+                  
+                  {/* Opção dedicada invisível para forçar a limpeza segura */}
+                  <SelectItem value="___limpar___" className="font-semibold text-slate-400">
                     {filter.placeholder}
                   </SelectItem>
                   
