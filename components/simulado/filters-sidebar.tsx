@@ -41,16 +41,13 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
   const [isPending, startTransition] = useTransition();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // ==========================================
-  // BARREIRA DE CACHE CONTRA SOFT NAVIGATION
-  // ==========================================
+  // Barreira de Cache contra Soft Navigation
   const [cachedOptions, setCachedOptions] = useState<DbFilterOptions>({
     banca: [], orgao: [], ano: [], disciplina: [], assunto: []
   });
 
   useEffect(() => {
     if (dbOptions) {
-      // Confirma se o servidor enviou dados válidos antes de sobrescrever a memória
       const temDadosValidos = Object.values(dbOptions).some(
         (arr) => Array.isArray(arr) && arr.length > 0
       );
@@ -60,18 +57,26 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
     }
   }, [dbOptions]);
 
-  // Leitura segura da URL (Fonte Única de Verdade)
+  // =================================================================
+  // FILTRO DE SEGURANÇA: Limpa lixos que tenham ficado presos na URL
+  // =================================================================
+  const lerParametroSeguro = (key: string) => {
+    const val = searchParams.get(key) || "";
+    if (val === "___all___" || val === "___limpar___" || val === "vazio") return "";
+    return val;
+  };
+
   const selected: Record<FilterKey, string> = {
-    banca: searchParams.get("banca") || "",
-    orgao: searchParams.get("orgao") || "",
-    ano: searchParams.get("ano") || "",
-    disciplina: searchParams.get("disciplina") || "",
-    assunto: searchParams.get("assunto") || "",
+    banca: lerParametroSeguro("banca"),
+    orgao: lerParametroSeguro("orgao"),
+    ano: lerParametroSeguro("ano"),
+    disciplina: lerParametroSeguro("disciplina"),
+    assunto: lerParametroSeguro("assunto"),
   };
 
   const handleSelectChange = (key: FilterKey, val: string) => {
-    // Tratamento nativo: "___all___" é a nossa chave técnica para limpar o filtro no Radix UI
-    const cleanVal = val === "___all___" ? "" : val;
+    // Agora usamos a palavra "vazio" como chave padrão de limpeza
+    const cleanVal = val === "vazio" ? "" : val;
     const params = new URLSearchParams(searchParams.toString());
 
     if (cleanVal) {
@@ -80,12 +85,10 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
       params.delete(key);
     }
 
-    // Regra de Negócio: Se mudar a disciplina, o assunto anterior perde a validade
     if (key === "disciplina" && params.has("assunto")) {
       params.delete("assunto");
     }
 
-    // Retorna à primeira página sempre que um filtro é alterado
     if (params.has("page")) {
       params.delete("page");
     }
@@ -134,23 +137,18 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
         } ${mobileOpen ? "flex" : "hidden lg:flex"}`}
       >
         {filters.map((filter) => {
-          // Usa sempre o cache interno para garantir que a lista nunca pisca ou some
           const options = cachedOptions[filter.key] || [];
           const valorAtual = selected[filter.key];
 
           return (
-            <div key={filter.key} className="flex flex-col gap-1.5">
+             <div key={filter.key} className="flex flex-col gap-1.5">
               <Label htmlFor={filter.key} className="text-xs font-semibold" style={{ color: 'inherit', opacity: 0.8 }}>
                 {filter.label}
               </Label>
               
               <Select
-                // O truque da key força o componente a recriar-se e mostrar o placeholder correto quando limpa
-                key={valorAtual || `vazio-${filter.key}`} 
-                
-                // Usamos undefined em vez de "___all___" para ativar o placeholder nativo
-                value={valorAtual || undefined} 
-                
+                key={valorAtual || `reset-${filter.key}`}
+                value={valorAtual || undefined}
                 onValueChange={(val: any) => handleSelectChange(filter.key, String(val))}
               >
                 <SelectTrigger id={filter.key} className="w-full border border-current opacity-80" style={{ backgroundColor: 'transparent', color: 'inherit' }}>
@@ -158,8 +156,8 @@ export function FiltersSidebar({ dbOptions }: FiltersSidebarProps) {
                 </SelectTrigger>
                 <SelectContent className="bg-white border-slate-200 text-slate-700 max-h-[300px]">
                   
-                  {/* Mantemos esta opção na lista para o utilizador poder clicar e limpar */}
-                  <SelectItem value="___all___" className="font-semibold text-slate-400">
+                  {/* A nossa opção invisível agora chama-se 'vazio' */}
+                  <SelectItem value="vazio" className="font-semibold text-slate-400">
                     {filter.placeholder}
                   </SelectItem>
                   
