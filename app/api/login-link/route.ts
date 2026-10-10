@@ -18,19 +18,23 @@ export async function POST(req: Request) {
 
     const admin = supabaseAdmin as any;
 
-    // Só envia para quem tem compra aprovada
-    const { data: compra } = await admin
-      .from("compras")
-      .select("id")
-      .eq("email", email)
-      .eq("concedida", true)
-      .limit(1)
-      .maybeSingle();
+     // Limite: 1 link a cada 5 minutos e no máximo 5 por dia por e-mail
+ const agora = Date.now();
+ const { count: recentes } = await admin
+   .from("envios_login")
+   .select("id", { count: "exact", head: true })
+   .eq("email", email)
+   .gte("criado_em", new Date(agora - 5 * 60 * 1000).toISOString());
+ const { count: hoje } = await admin
+   .from("envios_login")
+   .select("id", { count: "exact", head: true })
+   .eq("email", email)
+   .gte("criado_em", new Date(agora - 24 * 60 * 60 * 1000).toISOString());
 
-    if (!compra) {
-      console.warn("login-link: e-mail sem compra:", email);
-      return resposta;
-    }
+ if ((recentes ?? 0) >= 1 || (hoje ?? 0) >= 5) {
+   console.warn("login-link: limite atingido para", email);
+   return resposta;
+ }
 
     const { data, error } = await admin.auth.admin.generateLink({
       type: "magiclink",
@@ -60,6 +64,7 @@ export async function POST(req: Request) {
           <p style="font-size:12px;color:#64748b">Se você não pediu este acesso, ignore este e-mail.</p>
         </div>`,
     });
+     await admin.from("envios_login").insert({ email });
 
     if (erroEnvio) console.error("login-link: erro no Resend:", erroEnvio);
   } catch (err) {

@@ -18,7 +18,20 @@ export async function middleware(request: NextRequest) {
       },
     }
   );
-  await supabase.auth.getUser();
+    const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Quem já está logado não precisa ver a tela de login
+  if (user && request.nextUrl.pathname === "/login") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/app";
+    url.search = "";
+    const redirect = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+    return redirect;
+  }
+
   return response;
 }
 

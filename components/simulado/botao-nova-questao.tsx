@@ -133,6 +133,14 @@ export function BotaoNovaQuestao({
             </span>
           </button>
         )}
+                {!logado && (
+          <a
+            href="/login"
+            className="flex items-center gap-1.5 border border-indigo-300 text-indigo-600 px-3.5 py-2 rounded-xl text-xs font-extrabold hover:bg-indigo-50 transition-all active:scale-95"
+          >
+            Já comprei • Entrar
+          </a>
+        )}
 
         {logado && (
           <button
