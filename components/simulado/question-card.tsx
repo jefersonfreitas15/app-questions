@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { useTema } from "./tema-context";
 import { ComentarioProfessor } from "./comentario-professor";
+import { useRouter } from "next/navigation";
 
 export function QuestionCard({
   question,
@@ -131,6 +132,7 @@ export function QuestionCard({
     }
     setTimeout(() => setSalvandoNota(false), 800);
   };
+    const router = useRouter();
 
   const handleResponder = async () => {
     if (!selectedId || isAnswered) return;
@@ -153,13 +155,20 @@ export function QuestionCard({
     if (logado) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from("respostas_usuarios").insert({
+        const { error } = await supabase.from("respostas_usuarios").insert({
           usuario_id: user.id,
           questao_id: question.id,
           alternativa_id: selectedId,
           acertou: acertou,
         });
-        if (onRespostaSalva) onRespostaSalva();
+
+        if (error) {
+          console.error("Erro ao salvar resposta:", error);
+          alert("Não foi possível salvar sua resposta: " + error.message);
+        } else {
+          router.refresh(); // atualiza Resolvidas, Acertos e Raio-X na hora
+          if (onRespostaSalva) onRespostaSalva();
+        }
       }
     }
   };
