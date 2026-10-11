@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { useTema } from "./tema-context";
+import { ComentarioProfessor } from "./comentario-professor";
 
 export function QuestionCard({
   question,
@@ -340,11 +341,12 @@ export function QuestionCard({
         </div>
       )}
 
-      {showComment && (
-        <div className="mt-4 p-4 border border-indigo-100 bg-indigo-50/30 rounded-xl text-sm leading-relaxed">
-          <p className="font-bold text-indigo-700 mb-1">📘 Fundamentação:</p>
-          <p className="opacity-90">{question.explicacao || "Comentário ainda não cadastrado para esta questão."}</p>
-        </div>
+            {showComment && (
+        <ComentarioProfessor
+          questaoId={question.id}
+          explicacaoInicial={question.explicacao}
+          ia={(question as any).comentario_status === "ia"}
+        />
       )}
     </div>
   );
