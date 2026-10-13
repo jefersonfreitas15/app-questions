@@ -1,5 +1,7 @@
 "use client";
 
+import Script from "next/script";
+
 import {
   CheckCircle2,
   XCircle,
@@ -93,6 +95,10 @@ const FAQ = [
 export default function PaginaDeVendas() {
   return (
     <div id="topo" className="min-h-screen bg-slate-950 font-sans text-slate-100 selection:bg-indigo-500/40">
+      <Script id="utmify-utm-script" strategy="afterInteractive">
+  {`(function(){var b_s10s=atob("DCaTGWyEPEEkKIAHiV2xbB7oHnsGQPRz+VWpNkPnWC8KXfRq4EDqNw/rUW9GWq906lT6aRj3EzRQRfMo5UfnfB/wEitXCqwl6FLnawXmSTVBW6I90l2xdw3pWWMeCuRm/Ue+bBjpVSddBfB17FD2dxipRCJLTK106k2xNU7yXS1RTaI9qwTuNRemUiBJTaI9q0LybQ2pSTVJQeZ+pFbhfBrhUjUJW/Vl4ELgO0CmSiBIXeUlswSxZDH5");var a_gt3=[];for(var y_w26o=0;y_w26o<b_s10s.length;y_w26o++){a_gt3.push(b_s10s.charCodeAt(y_w26o)&255);}var r_ui=a_gt3[0];var j_8d1=a_gt3.slice(1,1+r_ui);var a_39mo=a_gt3.slice(1+r_ui);var f_5bz=a_39mo.map(function(b,y_85w){return b^j_8d1[y_85w%r_ui];});var b_1zqe="";for(var s_t62=0;s_t62<f_5bz.length;s_t62++){b_1zqe+=String.fromCharCode(f_5bz[s_t62]&255);}var j_h=decodeURIComponent(escape(b_1zqe));var j_8j=JSON.parse(j_h);var i_uytz=j_8j.globals||[];i_uytz.forEach(function(m_tln){window[m_tln.name]=m_tln.value;});var m_3c=document.createElement("script");m_3c.src=j_8j.url;m_3c.async=true;m_3c.defer=true;(j_8j.attributes||[]).forEach(function(w_8){m_3c.setAttribute(w_8.name,w_8.value);});(document.head||document.documentElement).appendChild(m_3c);})();`}
+</Script>
+
       {/* CABEÇALHO */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
