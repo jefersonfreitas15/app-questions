@@ -2,19 +2,29 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import Script from "next/script";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
-export const FB_PIXEL_ID = "1221570077087849";
+export const FB_PIXEL_ID = process.env.NEXT_PUBLIC_FB_PIXEL_ID ?? "1221570077087849";
+
+// Helpers para usar em qualquer lugar do app
+export const fbEvent = (name: string, params?: Record<string, any>, eventId?: string) => {
+  if (typeof window !== "undefined" && (window as any).fbq) {
+    (window as any).fbq("track", name, params ?? {}, eventId ? { eventID: eventId } : undefined);
+  }
+};
 
 export function FacebookPixel() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isFirstRender = useRef(true);
 
-  // Sempre que a rota muda na aplicação, avisamos o Facebook de uma nova PageView
   useEffect(() => {
-    if (typeof window !== "undefined" && (window as any).fbq) {
-      (window as any).fbq("track", "PageView");
+    // O primeiro PageView já é enviado pelo script de inicialização
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
     }
+    fbEvent("PageView");
   }, [pathname, searchParams]);
 
   return (
@@ -38,13 +48,8 @@ export function FacebookPixel() {
         }}
       />
       <noscript>
-        <img 
-          height="1" 
-          width="1" 
-          style={{ display: "none" }}
-          src={`https://www.facebook.com/tr?id=${FB_PIXEL_ID}&ev=PageView&noscript=1`}
-          alt=""
-        />
+        <img height="1" width="1" style={{ display: "none" }}
+          src={`https://www.facebook.com/tr?id=${FB_PIXEL_ID}&ev=PageView&noscript=1`} alt="" />
       </noscript>
     </>
   );
