@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, Suspense } from "react";
+import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2, Mail, ArrowRight, ShieldCheck } from "lucide-react";
@@ -9,15 +9,7 @@ function ConteudoObrigado() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
 
-  useEffect(() => {
-    // Disparo do Pixel de Compra (se houver fbq instalado)
-    if (typeof window !== "undefined" && (window as any).fbq) {
-      (window as any).fbq("track", "Purchase", {
-        currency: "BRL",
-        value: 47.0,
-      });
-    }
-  }, []);
+
 
   return (
     <div className="min-h-svh bg-slate-50 flex items-center justify-center p-4 sm:p-6 text-slate-900">
